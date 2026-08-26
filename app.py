@@ -38,6 +38,36 @@ st.markdown("""
         display: none;
     }
 
+    /* כפתור סטטוס דרייב צף וקומפקטי בפינה השמאלית העליונה */
+    div[data-testid="stPopover"] {
+        position: fixed !important;
+        top: 12px !important;
+        left: 20px !important;
+        right: auto !important;
+        width: auto !important;
+        z-index: 999999 !important;
+    }
+    div[data-testid="stPopover"] > button {
+        width: auto !important;
+        min-width: unset !important;
+        background-color: #ffffff !important;
+        color: #2E7D32 !important;
+        border: 1px solid #c8e6c9 !important;
+        border-radius: 20px !important;
+        padding: 5px 14px !important;
+        font-size: 0.85rem !important;
+        font-weight: bold !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.06) !important;
+    }
+    div[data-testid="stPopover"] > button:hover {
+        background-color: #f1f8e9 !important;
+        border-color: #2E7D32 !important;
+    }
+    div[data-testid="stPopoverBody"] {
+        direction: rtl !important;
+        text-align: right !important;
+    }
+
     /* כפתורים כלליים */
     .stButton>button {
         width: 100%;
@@ -79,9 +109,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌱 ממשק חכם לניסוח תכנית לימודים אישית לתלמיד בחינוך המיוחד – תל\"א")
-st.caption("מערכת לגזירת מטרות על ויעדים אופרטיביים על בסיס תיאור הילד/ה")
-
 DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1IHat-atuDDzFIfsmKq24aF7WkDjhbx0S?usp=drive_link"
 LOCAL_DRIVE_FOLDER = "drive_examples"
 
@@ -113,6 +140,22 @@ def sync_and_load_drive_examples():
 with st.spinner("מסנכרן דוגמאות מתיקיית הדרייב..."):
     examples_context = sync_and_load_drive_examples()
 
+# כפתור קומפקטי בפינה השמאלית העליונה
+with st.popover("📁 מאגר דרייב"):
+    st.markdown("**סטטוס חיבור ל-Google Drive:**")
+    if examples_context:
+        num_docs = examples_context.count("=== דוגמת תל\"א מקצועית")
+        st.success(f"🟢 מחובר ומסונכרן!\n\nנטענו **{num_docs}** קובצי תל\"א ללמידת המודל.")
+    else:
+        st.warning("⚠️ לא אותרו קבצים בתיקייה (וודאי שהשיתוף פתוח לצפייה לכולם).")
+    
+    if st.button("🔄 רענן מאגר דרייב", key="refresh_drive_btn"):
+        st.cache_data.clear()
+        st.rerun()
+
+st.title("🌱 ממשק חכם לניסוח תכנית לימודים אישית לתלמיד בחינוך המיוחד – תל\"א")
+st.caption("מערכת לגזירת מטרות על ויעדים אופרטיביים על בסיס תיאור הילד/ה")
+
 with st.sidebar:
     st.header("הגדרות מערכת")
     api_key = st.text_input(
@@ -120,14 +163,6 @@ with st.sidebar:
         value="AQ.Ab8RN6KO-aLO8c_IGTJZnUl0ju67TTDDblmIPxEQr4LeH0KGAA", 
         type="password"
     )
-    if examples_context:
-        st.success("מאגר הדוגמאות מחובר ומנותח!")
-    else:
-        st.warning("לא אותרו קבצים בתיקיית הדרייב.")
-    
-    if st.button("🔄 רענן מאגר דרייב"):
-        st.cache_data.clear()
-        st.rerun()
 
 if 'goals_list' not in st.session_state:
     st.session_state['goals_list'] = []
@@ -162,59 +197,81 @@ if st.button("🚀 הפק מטרות ויעדים"):
     if not input_text.strip():
         st.warning("אנא הזיני נתוני תפקוד.")
     else:
-        with st.spinner("מנתח דפוסים ומנסח מטרות תמציתיות וממוקדות..."):
+        with st.spinner("מנתח דפוסים ומנסח מטרות ויעדים תפקודיים ממוקדי השתתפות..."):
             try:
                 system_prompt = f"""
-אתה עוזר פדגוגי ופרא-רפואי מומחה לניסוח תכניות לימודים אישיות (תל"א) בגני חינוך מיוחד ושיקומיים.
-תפקידך: לגזור בדיוק 3 מטרות-על תמציתיות וממוקדות, יעדים אופרטיביים ודרכי הוראה עבור הילד/ה '{student_name}' ({gender}) על בסיס מוקדי הכוח והחיזוק.
+אתה מומחה פדגוגי וקליני בכיר לניסוח תכניות לימודים אישיות (תל"א) בגני חינוך מיוחד ושיקומיים.
+תפקידך לנסח תל"א מקצועית עבור '{student_name}' ({gender}) על בסיס נתוני התפקוד.
 
+חובה עליך להתבסס באופן מלא על שפת הניסוח, הטרמינולוגיה ואופן גזירת המדרג בין מטרות ליעדים במאגר הדוגמאות:
 ---
-### מאגר הדוגמאות ללמידה וחיקוי:
+### מאגר הדוגמאות המקצועיות:
 {examples_context}
 
 ---
-### כללי ניסוח קריטיים למטרת-העל (תמציתיות ופשטות):
-1. **מבנה משפט פשוט וקצר (ללא פיצול):**
-   - מטרת-העל חייבת להיות משפט קצר ותמציתי המתאר פעולה תפקודית מרכזית **אחת**.
-   - **אסור לחבר שתי פעולות שונות באמצעות ו"ו החיבור!**
-2. **אינטגרציה אורגנית (אם נדרשת):** מותר לשלב רק רכיבים שמגדירים את אותה הפעולה עצמה.
-3. **מבנה היעדים האופרטיביים:**
-   - כל יעד ייפתח בשם הילד/ה ('{student_name}') + פועל תפקודי נצפה.
-   - חובה לציין רמת תיווך מדורגת והקשר בשגרת הגן.
-4. **דרכי הוראה עשירות:** פירוט אסטרטגיות טיפוליות מתוך הדוגמאות.
+### עקרונות פדגוגיים מחייבים:
+
+1. **דגש תפקודי ומוכוון השתתפות יומיומית (Functioning & Active Participation):**
+   - **איסור מוחלט על ניסוחים מופשטים של רכישת ידע/מיומנות עמומה:** (אין לנסח: "{student_name} תרכוש מיומנות...", "{student_name} תלמד מושגים...", "{student_name} תפתח יכולת...").
+   - **חובה לנסח מטרות ויעדים של השתתפות פעילה, תפקוד ועשייה בשגרת הגן:** (יש לנסח: "{student_name} תשתתף במשחק הדדי...", "{student_name} תביע בחירה ורצון בזמן ארוחה/משחק...", "{student_name} תיקח חלק פעיל במפגש...", "{student_name} תפעל באופן עצמאי בהתארגנות...").
+
+2. **כמות מחייבת:** בדיוק 3 מטרות-על. לכל מטרת-על בדיוק 3 יעדים אופרטיביים.
+
+3. **מטרת-העל (Goal Title) – רחבה, כוללת, תפקודית וקצרה:**
+   - שאיפה תפקודית רחבה בתחום משמעותי בשגרת היומיום (משחק חברתי והדדיות / תקשורת והבעה מילולית / עצמאות בהתארגנות / השתתפות במפגש).
+   - קצרה ותמציתית, ללא תנאי ביצוע ספציפיים וללא רמות תיווך בכותרת.
+   - איסור מוחלט על חיבור שתי פעולות שונות באמצעות ו"ו החיבור.
+
+4. **היעדים האופרטיביים (Objectives) – שלבי השתתפות מדורגים ומדידים:**
+   - כל 3 היעדים נגזרים ישירות ובלעדית מאותה מטרת-על ומהווים סולם שלבים התפתחותי / תיווכי / תפקודי להשגתה.
+   - כל יעד ייפתח בשם המפורש '{student_name}' (אין לכתוב 'הילדה'/'הילד') + פועל תפקודי נצפה של השתתפות/ביצוע + רמת תיווך מפורשת + הקשר והזדמנות בשגרת הגן.
+
+5. **דרכי הוראה ואמצעים:** פירוט רחב של אסטרטגיות פדגוגיות וטיפוליות בהתאם לדוגמאות.
 
 ---
-### מבנה הפלט הנדרש (JSON בלבד):
+### מבנה הפלט הנדרש (JSON בלבד של בדיוק 3 מטרות):
 [
   {{
-    "goal_title": "ניסוח מטרת-על קצרה, תמציתית וחד-פעולתית עבור {student_name}",
-    "domains": "תחום תפקוד יחיד או משולב טבעי",
+    "goal_title": "{student_name} תשתתף / תפעל / תביע (שאיפה תפקודית כוללת)...",
+    "domains": "תחום תפקוד",
     "objectives_list": [
-      {{"text": "יעד אופרטיבי 1", "timeframe": "עד סוף השנה"}},
-      {{"text": "יעד אופרטיבי 2", "timeframe": "עד סוף השנה"}},
-      {{"text": "יעד אופרטיבי 3", "timeframe": "עד סוף השנה"}}
+      {{"text": "{student_name} תשתתף/תבצע (שלב 1 מדורג) בתיווך... בהקשר...", "timeframe": "עד סוף השנה"}},
+      {{"text": "{student_name} תשתתף/תבצע (שלב 2 מדורג) בתיווך... בהקשר...", "timeframe": "עד סוף השנה"}},
+      {{"text": "{student_name} תשתתף/תבצע (שלב 3 מתקדם/עצמאי) בהקשר...", "timeframe": "עד סוף השנה"}}
     ],
-    "teaching_methods": "• דרך הוראה 1\\n• דרך הוראה 2\\n• דרך הוראה 3"
+    "teaching_methods": "• אסטרטגיה 1\\n• אסטרטגיה 2\\n• אסטרטגיה 3"
   }}
 ]
 """
                 client = genai.Client(api_key=api_key)
                 response = client.models.generate_content(
                     model='gemini-3.6-flash',
-                    contents=f"נתוני התפקוד של {student_name}:\n{input_text}",
+                    contents=f"נתוני התפקוד של {student_name} ({gender}):\n{input_text}",
                     config=types.GenerateContentConfig(
                         system_instruction=system_prompt,
                         response_mime_type="application/json"
                     )
                 )
                 parsed_data = json.loads(response.text)
+                
+                # הבטחת בדיוק 3 מטרות ו-3 יעדים
+                parsed_data = parsed_data[:3]
                 for item in parsed_data:
+                    item['ver'] = 0
                     if "objectives" in item and "objectives_list" not in item:
                         lines = [l.strip(" •\n\r") for l in item["objectives"].split("\n") if l.strip()]
-                        item["objectives_list"] = [{"text": l, "timeframe": item.get("timeframe", "עד סוף השנה")} for l in lines]
+                        item["objectives_list"] = [{"text": l, "timeframe": item.get("timeframe", "עד סוף השנה"), "ver": 0} for l in lines]
+                    
+                    item_objs = item.get("objectives_list", [])[:3]
+                    while len(item_objs) < 3:
+                        item_objs.append({"text": f"{student_name} תשתתף בפעילות תפקודית מותאמת בהנחיית הצוות", "timeframe": "עד סוף השנה", "ver": 0})
+                    for obj in item_objs:
+                        obj['ver'] = 0
+                    item['objectives_list'] = item_objs
+                
                 st.session_state['goals_list'] = parsed_data
                 st.session_state['current_input_text'] = input_text
-                st.success("המטרות והיעדים הופקו בהצלחה!")
+                st.success("המטרות והיעדים הופקו בהצלחה בדגש תפקודי ומוכוון השתתפות!")
             except Exception as e:
                 st.error(f"שגיאה בהפקה: {e}")
 st.markdown('</div>', unsafe_allow_html=True)
@@ -225,32 +282,49 @@ if st.session_state['goals_list']:
     st.subheader("2. עריכה, דיוק והתאמת המטרות")
 
     for idx, goal in enumerate(st.session_state['goals_list']):
+        g_ver = goal.get('ver', 0)
         current_title = goal.get('goal_title', '')
-        if "objectives_list" not in goal and "objectives" in goal:
-            lines = [l.strip(" •\n\r") for l in goal["objectives"].split("\n") if l.strip()]
-            goal["objectives_list"] = [{"text": l, "timeframe": goal.get('timeframe', 'עד סוף השנה')} for l in lines]
-
-        with st.expander(f"🎯 מטרה {idx+1}: {current_title}", expanded=True):
+        
+        with st.expander(f"🎯 מטרה {idx+1}: {current_title}", expanded=True, key=f"goal_expander_{idx}"):
             col_a, col_b = st.columns([3, 1])
             with col_a:
-                new_title = st.text_input(f"כותרת מטרה {idx+1} (עדכון בלחיצת Enter):", value=current_title, key=f"title_{idx}")
-                if new_title != goal['goal_title']:
-                    goal['goal_title'] = new_title
-                    st.rerun()
+                goal['goal_title'] = st.text_input(
+                    f"כותרת מטרה {idx+1}:", 
+                    value=current_title, 
+                    key=f"title_{idx}_{g_ver}"
+                )
 
-                goal['domains'] = st.text_input(f"תחומי תפקוד:", value=goal.get('domains', ''), key=f"dom_{idx}")
+                goal['domains'] = st.text_input(
+                    f"תחומי תפקוד:", 
+                    value=goal.get('domains', ''), 
+                    key=f"dom_{idx}_{g_ver}"
+                )
             
             with col_b:
                 st.write("**פעולות למטרה זו:**")
-                if st.button(f"🔄 נסח מחדש", key=f"regen_{idx}"):
-                    with st.spinner("מנסח חלופה תמציתית..."):
+                if st.button(f"🔄 נסח מחדש", key=f"btn_regen_goal_{idx}"):
+                    with st.spinner("מנסח חלופה תפקודית כוללת למטרה..."):
                         client = genai.Client(api_key=api_key)
-                        regen_prompt = f"הצע ניסוח חלופי תמציתי וממוקד בפעולה אחת עבור {student_name} ({gender}) בהתבסס על מוקדי הכוח והחיזוק:\n{goal['goal_title']}\nהחזר מחרוזת טקסט פשוטה בלבד."
+                        regen_prompt = f"""אתה מומחה לניסוח תל"א בגני חינוך מיוחד.
+הצע ניסוח חלופי, כללי ותפקודי (מוכוון השתתפות פעילה בשגרת הגן) למטרת-העל עבור {student_name} ({gender}).
+התבסס על הסגנון והשפה במאגר הדוגמאות:
+{examples_context}
+
+הניסוח הנוכחי: '{goal['goal_title']}'
+רקע נתוני תפקוד הילד/ה:
+{st.session_state.get('current_input_text', '')}
+
+דגשים קריטיים:
+1. ניסוח תפקודי של השתתפות ועשייה יומיומית (למשל: '{student_name} תשתתף...', '{student_name} תביע...', '{student_name} תיקח חלק...'). אסור לנסח 'תרכוש מיומנות' או 'תלמד מושגים'.
+2. מטרת-על כללית וכוללת, קצרה ותמציתית, ללא תנאים ספציפיים בכותרת.
+3. השתמש בשם המפורש '{student_name}' ואל תכתוב 'הילדה' או 'הילד'.
+4. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
                         res = client.models.generate_content(
                             model='gemini-3.6-flash',
                             contents=regen_prompt
                         )
-                        goal['goal_title'] = res.text.strip().replace('"', '')
+                        goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
+                        goal['ver'] = g_ver + 1
                         st.rerun()
                 
                 prompt_g_val = st.session_state.get(f"edit_g_p_{idx}", "")
@@ -260,12 +334,14 @@ if st.session_state['goals_list']:
                             client = genai.Client(api_key=api_key)
                             res = client.models.generate_content(
                                 model='gemini-3.6-flash',
-                                contents=f"ערוך את מטרת-העל עבור {student_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. החזר טקסט בלבד."
+                                contents=f"ערוך את מטרת-העל עבור {student_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על ניסוח תפקודי של השתתפות פעילה בשגרת הגן, והשתמש בשם המפורש '{student_name}' (ללא 'הילדה'). החזר טקסט בלבד."
                             )
-                            goal['goal_title'] = res.text.strip().replace('"', '')
+                            goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
+                            goal['ver'] = g_ver + 1
+                            st.session_state[f"edit_g_p_{idx}"] = ""
                             st.rerun()
                 
-                st.text_input("תיאור לעריכת מטרה:", placeholder="למשל: הוסף התייחסות למובנות דיבור", key=f"edit_g_p_{idx}", label_visibility="collapsed")
+                st.text_input("תיאור לעריכת מטרה:", placeholder="למשל: דגש על השתתפות בארוחה", key=f"edit_g_p_{idx}", label_visibility="collapsed")
                 
                 if st.button(f"🗑️ מחק מטרה", key=f"del_{idx}"):
                     st.session_state['goals_list'].pop(idx)
@@ -273,25 +349,49 @@ if st.session_state['goals_list']:
 
             st.markdown("---")
             
-            # מבנה טבלאי
+            # מבנה טבלאי של היעדים ודרכי ההוראה
             t_col_left, t_col_right = st.columns([6, 4])
             with t_col_left:
                 for o_idx, obj_item in enumerate(goal.get('objectives_list', [])):
+                    o_ver = obj_item.get('ver', 0)
                     col_obj_text, col_obj_tf = st.columns([4, 2])
                     with col_obj_text:
                         st.markdown(f"**יעד {o_idx+1}:**")
-                        goal['objectives_list'][o_idx]['text'] = st.text_area(f"טקסט יעד {o_idx+1}", value=obj_item.get('text', ''), height=70, label_visibility="collapsed", key=f"obj_txt_{idx}_{o_idx}")
+                        obj_item['text'] = st.text_area(
+                            f"טקסט יעד {o_idx+1}", 
+                            value=obj_item.get('text', ''), 
+                            height=70, 
+                            label_visibility="collapsed", 
+                            key=f"obj_txt_{idx}_{o_idx}_{o_ver}"
+                        )
                         
                         c_b1, c_b2 = st.columns([1, 1])
                         with c_b1:
-                            if st.button("🔄 נסח מחדש", key=f"reg_obj_{idx}_{o_idx}"):
-                                with st.spinner("מנסח יעד..."):
+                            if st.button("🔄 נסח מחדש", key=f"btn_reg_obj_{idx}_{o_idx}"):
+                                with st.spinner("מנסח יעד תפקודי הנגזר מהמטרה..."):
                                     client = genai.Client(api_key=api_key)
+                                    regen_obj_prompt = f"""אתה מומחה לניסוח יעדים אופרטיביים בתל"א לגני חינוך מיוחד.
+הצע ניסוח חלופי, תפקודי ומדורג (בדגש על השתתפות יומיומית) ליעד אופרטיבי זה בלבד עבור {student_name} ({gender}).
+התבסס על הדוגמאות במאגר:
+{examples_context}
+
+מטרת-העל אליה היעד משתייך: '{goal['goal_title']}'
+היעד הנוכחי: '{obj_item.get('text', '')}'
+רקע נתוני תפקוד:
+{st.session_state.get('current_input_text', '')}
+
+דגשים מחייבים:
+1. היעד חייב להיגזר ישירות ממטרת-העל '{goal['goal_title']}' ולהוות שלב של השתתפות/תפקוד פעיל ומדיד בשגרת הגן.
+2. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות בפועל.
+3. חובה לפתוח בשם המפורש '{student_name}' ולא לכתוב 'הילדה' או 'הילד'.
+4. כלול רמת תיווך מפורשת והקשר בשגרת הגן.
+5. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
                                     res = client.models.generate_content(
                                         model='gemini-3.6-flash',
-                                        contents=f"נסח מחדש יעד אופרטיבי זה עבור {student_name} ({gender}): '{obj_item.get('text', '')}'. מטרת-העל היא: '{goal['goal_title']}'. החזר משפט יחיד בלבד."
+                                        contents=regen_obj_prompt
                                     )
-                                    goal['objectives_list'][o_idx]['text'] = res.text.strip().replace('"', '')
+                                    obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
+                                    obj_item['ver'] = o_ver + 1
                                     st.rerun()
                         with c_b2:
                             if st.button("🗑️ מחק יעד", key=f"del_obj_{idx}_{o_idx}"):
@@ -305,16 +405,23 @@ if st.session_state['goals_list']:
                                     client = genai.Client(api_key=api_key)
                                     res = client.models.generate_content(
                                         model='gemini-3.6-flash',
-                                        contents=f"ערוך את היעד עבור {student_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. החזר משפט יחיד בלבד."
+                                        contents=f"ערוך את היעד של {student_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', מדגיש השתתפות ותפקוד, פותח בשם '{student_name}' (ללא 'הילדה') וכולל תיווך והקשר. החזר משפט יחיד בלבד."
                                     )
-                                    goal['objectives_list'][o_idx]['text'] = res.text.strip().replace('"', '')
+                                    obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
+                                    obj_item['ver'] = o_ver + 1
+                                    st.session_state[f"pr_obj_{idx}_{o_idx}"] = ""
                                     st.rerun()
                                     
                         st.text_input("ערוך יעד לפי תיאור:", placeholder="למשל: יעד בסיסי יותר", key=f"pr_obj_{idx}_{o_idx}", label_visibility="collapsed")
 
                     with col_obj_tf:
                         st.markdown("**פרק זמן להשגה**")
-                        goal['objectives_list'][o_idx]['timeframe'] = st.text_input(f"פרק זמן ליעד {o_idx+1}", value=obj_item.get('timeframe', 'עד סוף השנה'), key=f"obj_T_{idx}_{o_idx}", label_visibility="collapsed")
+                        obj_item['timeframe'] = st.text_input(
+                            f"פרק זמן ליעד {o_idx+1}", 
+                            value=obj_item.get('timeframe', 'עד סוף השנה'), 
+                            key=f"obj_T_{idx}_{o_idx}_{o_ver}", 
+                            label_visibility="collapsed"
+                        )
 
                     st.markdown("---")
 
@@ -322,16 +429,25 @@ if st.session_state['goals_list']:
                 st.markdown("**➕ הוספת יעד חדש:**")
                 add_obj_val = st.session_state.get(f"add_obj_p_{idx}", "")
                 if st.button("הוסף יעד למטרה זו", key=f"do_add_obj_{idx}"):
-                    with st.spinner("מוסיף יעד חדש..."):
+                    with st.spinner("מנסח יעד תפקודי חדש הנגזר ישירות ממטרת-העל..."):
                         client = genai.Client(api_key=api_key)
-                        prompt_add = f"נסח יעד אופרטיבי נוסף למטרת-העל: '{goal['goal_title']}' עבור {student_name} ({gender})."
+                        prompt_add = f"""אתה מומחה לניסוח תל"א.
+הוסף יעד אופרטיבי נוסף של השתתפות ותפקוד יומיומי שנגזר ישירות ובלעדית ממטרת-העל: '{goal['goal_title']}' עבור {student_name} ({gender}).
+התבסס על הסגנון והטרמינולוגיה בדוגמאות:
+{examples_context}
+"""
                         if add_obj_val.strip():
-                            prompt_add += f" דגש: {add_obj_val}."
-                        prompt_add += " החזר משפט יחיד בלבד."
+                            prompt_add += f"\nדגש מיוחד ליעד: {add_obj_val}."
+                        prompt_add += f"\nהקפד לפתוח בשם המפורש '{student_name}' (אל תכתוב 'הילדה'), דגש על השתתפות פעילה ועשייה, לציין רמת תיווך והקשר בשגרת הגן. החזר משפט יחיד בלבד ללא מרכאות."
                         res = client.models.generate_content(model='gemini-3.6-flash', contents=prompt_add)
-                        goal.setdefault('objectives_list', []).append({"text": res.text.strip().replace('"', ''), "timeframe": "עד סוף השנה"})
+                        goal.setdefault('objectives_list', []).append({
+                            "text": res.text.strip().replace('"', '').replace("'", ""), 
+                            "timeframe": "עד סוף השנה",
+                            "ver": 0
+                        })
+                        st.session_state[f"add_obj_p_{idx}"] = ""
                         st.rerun()
-                st.text_input("תיאור ליעד החדש (אופציונלי):", placeholder="למשל: יעד הדרגתי לשלב המוקדם", key=f"add_obj_p_{idx}", label_visibility="collapsed")
+                st.text_input("תיאור ליעד החדש (אופציונלי):", placeholder="למשל: שלב השתתפות מקדים", key=f"add_obj_p_{idx}", label_visibility="collapsed")
 
             with t_col_right:
                 st.markdown("**דרכי הוראה, השיטות והאמצעים**")
@@ -340,7 +456,7 @@ if st.session_state['goals_list']:
                     "דרכי הוראה ואמצעים:", 
                     value=goal.get('teaching_methods', ''), 
                     height=970, 
-                    key=f"teach_{idx}", 
+                    key=f"teach_{idx}_{g_ver}", 
                     label_visibility="collapsed"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -349,23 +465,32 @@ if st.session_state['goals_list']:
     st.markdown("#### ➕ הוספת מטרה נוספת")
     col_new1, col_new2 = st.columns([3, 1])
     with col_new1:
-        custom_prompt = st.text_input("איזו מטרה תרצי להוסיף?", placeholder="למשל: נסח מטרה תמציתית בתחום משחק חברתי בחצר")
+        custom_prompt = st.text_input("איזו מטרה תרצי להוסיף?", placeholder="למשל: נסח מטרה תפקודית בתחום משחק חברתי בחצר")
     with col_new2:
         st.write("")
         st.write("")
         if st.button("הוסף מטרה זו"):
             if custom_prompt.strip():
-                with st.spinner("מנסח מטרה חדשה..."):
+                with st.spinner("מנסח מטרה ויעדים תפקודיים על בסיס הדוגמאות..."):
                     client = genai.Client(api_key=api_key)
                     add_prompt = f"""
-נסח מטרה חדשה בתחום '{custom_prompt}' עבור {student_name} ({gender}) ללא חיבור שתי פעולות.
-החזר JSON יחיד במבנה:
+אתה מומחה לניסוח תל"א בגני חינוך מיוחד.
+נסח מטרה חדשה בתחום '{custom_prompt}' עבור {student_name} ({gender}) על בסיס מאגר הדוגמאות:
+{examples_context}
+
+כללים:
+1. מטרת-על כללית וכוללת בדגש על השתתפות ותפקוד יומיומי עבור '{student_name}' (ללא 'תרכוש מיומנות').
+2. בדיוק 3 יעדים אופרטיביים המהווים שלבי השתתפות מדורגים (התפתחותיים / תיווך) שנגזרים ממנה ופותחים בשם '{student_name}'.
+3. דרכי הוראה טיפוליות מעשיות.
+
+החזר JSON יחיד בלבד במבנה:
 {{
-  "goal_title": "ניסוח מטרת-על קצרה",
+  "goal_title": "{student_name} תשתתף / תפעל...",
   "domains": "תחום תפקוד",
   "objectives_list": [
-    {{"text": "יעד 1", "timeframe": "עד סוף השנה"}},
-    {{"text": "יעד 2", "timeframe": "עד סוף השנה"}}
+    {{"text": "{student_name} תשתתף/תבצע (שלב 1)...", "timeframe": "עד סוף השנה"}},
+    {{"text": "{student_name} תשתתף/תבצע (שלב 2)...", "timeframe": "עד סוף השנה"}},
+    {{"text": "{student_name} תשתתף/תבצע (שלב 3)...", "timeframe": "עד סוף השנה"}}
   ],
   "teaching_methods": "• דרך הוראה 1\\n• דרך הוראה 2"
 }}
@@ -375,7 +500,11 @@ if st.session_state['goals_list']:
                         contents=add_prompt,
                         config=types.GenerateContentConfig(response_mime_type="application/json")
                     )
-                    st.session_state['goals_list'].append(json.loads(res.text))
+                    new_item = json.loads(res.text)
+                    new_item['ver'] = 0
+                    for obj in new_item.get('objectives_list', []):
+                        obj['ver'] = 0
+                    st.session_state['goals_list'].append(new_item)
                     st.rerun()
 
     # ייצוא קובץ Word
