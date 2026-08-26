@@ -117,7 +117,7 @@ with st.sidebar:
     st.header("הגדרות מערכת")
     api_key = st.text_input(
         "מפתח API:", 
-        value="AQ.Ab8RN6IIAlO6kCu-RyXAEBq6ESL3jyINeTl7OHEhDbnJQa7HDA", 
+        value="AQ.Ab8RN6KO-aLO8c_IGTJZnUl0ju67TTDDblmIPxEQr4LeH0KGAA", 
         type="password"
     )
     if examples_context:
