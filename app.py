@@ -172,7 +172,7 @@ col1, col2 = st.columns([1, 3])
 with col1:
     gender = st.radio("התאמה מגדרית:", ["ילדה (נקבה)", "ילד (זכר)"])
 with col2:
-    student_name = st.text_input("שם הילד/ה:", value="דנה", placeholder="הזיני את שם הילד/ה")
+    student_name = st.text_input("שם הילד/ה:", value="", placeholder="הזיני את שם הילד/ה")
 
 st.markdown("---")
 st.subheader("תיאור רמת התפקוד בתחומים הרלוונטיים")
@@ -194,50 +194,55 @@ else:
 
 st.markdown('<div class="main-btn">', unsafe_allow_html=True)
 if st.button("🚀 הפק מטרות ויעדים"):
+    active_name = student_name.strip() if student_name.strip() else ("הילדה" if "נקבה" in gender else "הילד")
     if not input_text.strip():
         st.warning("אנא הזיני נתוני תפקוד.")
     else:
         with st.spinner("מנתח דפוסים ומנסח מטרות ויעדים תפקודיים ממוקדי השתתפות..."):
             try:
+                env_pronoun = "לסביבתה" if "נקבה" in gender else "לסביבתו"
                 system_prompt = f"""
 אתה מומחה פדגוגי וקליני בכיר לניסוח תכניות לימודים אישיות (תל"א) בגני חינוך מיוחד ושיקומיים.
-תפקידך לנסח תל"א מקצועית עבור '{student_name}' ({gender}) על בסיס נתוני התפקוד.
+תפקידך לנסח תל"א מקצועית עבור '{active_name}' ({gender}) על בסיס נתוני התפקוד.
 
-חובה עליך להתבסס באופן מלא על שפת הניסוח, הטרמינולוגיה ואופן גזירת המדרג בין מטרות ליעדים במאגר הדוגמאות:
+חובה עליך להתבסס באופן מלא על שפת הניסוח, הטרמינולוגיה המקצועית ואופן גזירת המדרג בין מטרות ליעדים במאגר הדוגמאות:
 ---
 ### מאגר הדוגמאות המקצועיות:
 {examples_context}
 
 ---
-### עקרונות פדגוגיים מחייבים:
+### עקרונות פדגוגיים וקליניים מחייבים:
 
 1. **דגש תפקודי ומוכוון השתתפות יומיומית (Functioning & Active Participation):**
-   - **איסור מוחלט על ניסוחים מופשטים של רכישת ידע/מיומנות עמומה:** (אין לנסח: "{student_name} תרכוש מיומנות...", "{student_name} תלמד מושגים...", "{student_name} תפתח יכולת...").
-   - **חובה לנסח מטרות ויעדים של השתתפות פעילה, תפקוד ועשייה בשגרת הגן:** (יש לנסח: "{student_name} תשתתף במשחק הדדי...", "{student_name} תביע בחירה ורצון בזמן ארוחה/משחק...", "{student_name} תיקח חלק פעיל במפגש...", "{student_name} תפעל באופן עצמאי בהתארגנות...").
+   - **איסור מוחלט על ניסוחים מופשטים של רכישת ידע:** (אין לנסח: "{active_name} תרכוש מיומנות...", "{active_name} תלמד מושגים...", "{active_name} תפתח יכולת...").
+   - **חובה לנסח מטרות ויעדים של השתתפות פעילה, תפקוד ועשייה בשגרת הגן:** (יש לנסח: "{active_name} תשתתף במשחק הדדי...", "{active_name} תביע בחירה ורצון בזמן ארוחה/משחק...", "{active_name} תיקח חלק פעיל במפגש...", "{active_name} תפעל באופן עצמאי בהתארגנות...").
 
-2. **כמות מחייבת:** בדיוק 3 מטרות-על. לכל מטרת-על בדיוק 3 יעדים אופרטיביים.
+2. **טרמינולוגיה קלינית ומקצועית (קלינאות תקשורת וחינוך מיוחד):**
+   - בהתייחסות למובנות דיבור או בהירות קולית, **חובה להשתמש במינוח המקצועי המדויק מתוך הדוגמאות**: למשל, "באופן המובן {env_pronoun} (הקרובה/הרחוקה)", "במובנות דיבור תואמת הקשר", ולא בביטויים פשטניים כגון "דיבור ברור".
 
-3. **מטרת-העל (Goal Title) – רחבה, כוללת, תפקודית וקצרה:**
-   - שאיפה תפקודית רחבה בתחום משמעותי בשגרת היומיום (משחק חברתי והדדיות / תקשורת והבעה מילולית / עצמאות בהתארגנות / השתתפות במפגש).
+3. **כמות מחייבת:** בדיוק 3 מטרות-על. לכל מטרת-על בדיוק 3 יעדים אופרטיביים.
+
+4. **מטרת-העל (Goal Title) – רחבה, כוללת, תפקודית וקצרה:**
+   - שאיפה תפקודית רחבה בתחום משמעותי בשגרת היומיום.
    - קצרה ותמציתית, ללא תנאי ביצוע ספציפיים וללא רמות תיווך בכותרת.
    - איסור מוחלט על חיבור שתי פעולות שונות באמצעות ו"ו החיבור.
 
-4. **היעדים האופרטיביים (Objectives) – שלבי השתתפות מדורגים ומדידים:**
+5. **היעדים האופרטיביים (Objectives) – שלבי השתתפות מדורגים ומדידים:**
    - כל 3 היעדים נגזרים ישירות ובלעדית מאותה מטרת-על ומהווים סולם שלבים התפתחותי / תיווכי / תפקודי להשגתה.
-   - כל יעד ייפתח בשם המפורש '{student_name}' (אין לכתוב 'הילדה'/'הילד') + פועל תפקודי נצפה של השתתפות/ביצוע + רמת תיווך מפורשת + הקשר והזדמנות בשגרת הגן.
+   - כל יעד ייפתח בשם המפורש '{active_name}' (אין לכתוב 'הילדה'/'הילד') + פועל תפקודי נצפה של השתתפות/ביצוע + רמת תיווך מפורשת + הקשר והזדמנות בשגרת הגן.
 
-5. **דרכי הוראה ואמצעים:** פירוט רחב של אסטרטגיות פדגוגיות וטיפוליות בהתאם לדוגמאות.
+6. **דרכי הוראה ואמצעים:** פירוט רחב של אסטרטגיות פדגוגיות וטיפוליות בהתאם לדוגמאות.
 
 ---
 ### מבנה הפלט הנדרש (JSON בלבד של בדיוק 3 מטרות):
 [
   {{
-    "goal_title": "{student_name} תשתתף / תפעל / תביע (שאיפה תפקודית כוללת)...",
+    "goal_title": "{active_name} תשתתף / תפעל / תביע (שאיפה תפקודית כוללת)...",
     "domains": "תחום תפקוד",
     "objectives_list": [
-      {{"text": "{student_name} תשתתף/תבצע (שלב 1 מדורג) בתיווך... בהקשר...", "timeframe": "עד סוף השנה"}},
-      {{"text": "{student_name} תשתתף/תבצע (שלב 2 מדורג) בתיווך... בהקשר...", "timeframe": "עד סוף השנה"}},
-      {{"text": "{student_name} תשתתף/תבצע (שלב 3 מתקדם/עצמאי) בהקשר...", "timeframe": "עד סוף השנה"}}
+      {{"text": "{active_name} תשתתף/תבצע (שלב 1 מדורג) בתיווך... בהקשר...", "timeframe": "עד סוף השנה"}},
+      {{"text": "{active_name} תשתתף/תבצע (שלב 2 מדורג) בתיווך... בהקשר...", "timeframe": "עד סוף השנה"}},
+      {{"text": "{active_name} תשתתף/תבצע (שלב 3 מתקדם/עצמאי) בהקשר...", "timeframe": "עד סוף השנה"}}
     ],
     "teaching_methods": "• אסטרטגיה 1\\n• אסטרטגיה 2\\n• אסטרטגיה 3"
   }}
@@ -246,7 +251,7 @@ if st.button("🚀 הפק מטרות ויעדים"):
                 client = genai.Client(api_key=api_key)
                 response = client.models.generate_content(
                     model='gemini-3.6-flash',
-                    contents=f"נתוני התפקוד של {student_name} ({gender}):\n{input_text}",
+                    contents=f"נתוני התפקוד של {active_name} ({gender}):\n{input_text}",
                     config=types.GenerateContentConfig(
                         system_instruction=system_prompt,
                         response_mime_type="application/json"
@@ -264,7 +269,7 @@ if st.button("🚀 הפק מטרות ויעדים"):
                     
                     item_objs = item.get("objectives_list", [])[:3]
                     while len(item_objs) < 3:
-                        item_objs.append({"text": f"{student_name} תשתתף בפעילות תפקודית מותאמת בהנחיית הצוות", "timeframe": "עד סוף השנה", "ver": 0})
+                        item_objs.append({"text": f"{active_name} תשתתף בפעילות תפקודית מותאמת בהנחיית הצוות", "timeframe": "עד סוף השנה", "ver": 0})
                     for obj in item_objs:
                         obj['ver'] = 0
                     item['objectives_list'] = item_objs
@@ -278,6 +283,9 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ממשק עריכה אינטראקטיבי
 if st.session_state['goals_list']:
+    active_name = student_name.strip() if student_name.strip() else ("הילדה" if "נקבה" in gender else "הילד")
+    env_pronoun = "לסביבתה" if "נקבה" in gender else "לסביבתו"
+    
     st.markdown("---")
     st.subheader("2. עריכה, דיוק והתאמת המטרות")
 
@@ -306,19 +314,20 @@ if st.session_state['goals_list']:
                     with st.spinner("מנסח חלופה תפקודית כוללת למטרה..."):
                         client = genai.Client(api_key=api_key)
                         regen_prompt = f"""אתה מומחה לניסוח תל"א בגני חינוך מיוחד.
-הצע ניסוח חלופי, כללי ותפקודי (מוכוון השתתפות פעילה בשגרת הגן) למטרת-העל עבור {student_name} ({gender}).
+הצע ניסוח חלופי, כללי ותפקודי (מוכוון השתתפות פעילה בשגרת הגן) למטרת-העל עבור {active_name} ({gender}).
 התבסס על הסגנון והשפה במאגר הדוגמאות:
 {examples_context}
 
 הניסוח הנוכחי: '{goal['goal_title']}'
-רקע נתוני תפקוד הילד/ה:
+רקע נתוני תפקוד:
 {st.session_state.get('current_input_text', '')}
 
 דגשים קריטיים:
-1. ניסוח תפקודי של השתתפות ועשייה יומיומית (למשל: '{student_name} תשתתף...', '{student_name} תביע...', '{student_name} תיקח חלק...'). אסור לנסח 'תרכוש מיומנות' או 'תלמד מושגים'.
+1. ניסוח תפקודי של השתתפות ועשייה יומיומית (למשל: '{active_name} תשתתף...', '{active_name} תביע...', '{active_name} תיקח חלק...'). אסור לנסח 'תרכוש מיומנות'.
 2. מטרת-על כללית וכוללת, קצרה ותמציתית, ללא תנאים ספציפיים בכותרת.
-3. השתמש בשם המפורש '{student_name}' ואל תכתוב 'הילדה' או 'הילד'.
-4. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
+3. בהתייחסות למובנות דיבור השתמש בביטוי המקצועי: 'באופן המובן {env_pronoun}' (ולא 'דיבור ברור').
+4. השתמש בשם המפורש '{active_name}' ואל תכתוב 'הילדה' או 'הילד' (אלא אם זהו השם שנבחר).
+5. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
                         res = client.models.generate_content(
                             model='gemini-3.6-flash',
                             contents=regen_prompt
@@ -334,14 +343,14 @@ if st.session_state['goals_list']:
                             client = genai.Client(api_key=api_key)
                             res = client.models.generate_content(
                                 model='gemini-3.6-flash',
-                                contents=f"ערוך את מטרת-העל עבור {student_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על ניסוח תפקודי של השתתפות פעילה בשגרת הגן, והשתמש בשם המפורש '{student_name}' (ללא 'הילדה'). החזר טקסט בלבד."
+                                contents=f"ערוך את מטרת-העל עבור {active_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על ניסוח תפקודי של השתתפות פעילה בשגרת הגן, בהתייחסות למובנות דיבור השתמש ב'באופן המובן {env_pronoun}' (ולא 'דיבור ברור'), והשתמש בשם המפורש '{active_name}'. החזר טקסט בלבד."
                             )
                             goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
                             goal['ver'] = g_ver + 1
                             st.session_state[f"edit_g_p_{idx}"] = ""
                             st.rerun()
                 
-                st.text_input("תיאור לעריכת מטרה:", placeholder="למשל: דגש על השתתפות בארוחה", key=f"edit_g_p_{idx}", label_visibility="collapsed")
+                st.text_input("תיאור לעריכת מטרה:", placeholder="למשל: התייחס למובנות הדיבור", key=f"edit_g_p_{idx}", label_visibility="collapsed")
                 
                 if st.button(f"🗑️ מחק מטרה", key=f"del_{idx}"):
                     st.session_state['goals_list'].pop(idx)
@@ -371,7 +380,7 @@ if st.session_state['goals_list']:
                                 with st.spinner("מנסח יעד תפקודי הנגזר מהמטרה..."):
                                     client = genai.Client(api_key=api_key)
                                     regen_obj_prompt = f"""אתה מומחה לניסוח יעדים אופרטיביים בתל"א לגני חינוך מיוחד.
-הצע ניסוח חלופי, תפקודי ומדורג (בדגש על השתתפות יומיומית) ליעד אופרטיבי זה בלבד עבור {student_name} ({gender}).
+הצע ניסוח חלופי, תפקודי ומדורג (בדגש על השתתפות יומיומית) ליעד אופרטיבי זה בלבד עבור {active_name} ({gender}).
 התבסס על הדוגמאות במאגר:
 {examples_context}
 
@@ -383,9 +392,10 @@ if st.session_state['goals_list']:
 דגשים מחייבים:
 1. היעד חייב להיגזר ישירות ממטרת-העל '{goal['goal_title']}' ולהוות שלב של השתתפות/תפקוד פעיל ומדיד בשגרת הגן.
 2. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות בפועל.
-3. חובה לפתוח בשם המפורש '{student_name}' ולא לכתוב 'הילדה' או 'הילד'.
-4. כלול רמת תיווך מפורשת והקשר בשגרת הגן.
-5. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
+3. בהתייחסות למובנות דיבור השתמש בביטוי: 'באופן המובן {env_pronoun}' (ולא 'דיבור ברור').
+4. חובה לפתוח בשם המפורש '{active_name}'.
+5. כלול רמת תיווך מפורשת והקשר בשגרת הגן.
+6. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
                                     res = client.models.generate_content(
                                         model='gemini-3.6-flash',
                                         contents=regen_obj_prompt
@@ -405,7 +415,7 @@ if st.session_state['goals_list']:
                                     client = genai.Client(api_key=api_key)
                                     res = client.models.generate_content(
                                         model='gemini-3.6-flash',
-                                        contents=f"ערוך את היעד של {student_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', מדגיש השתתפות ותפקוד, פותח בשם '{student_name}' (ללא 'הילדה') וכולל תיווך והקשר. החזר משפט יחיד בלבד."
+                                        contents=f"ערוך את היעד של {active_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', מדגיש השתתפות ותפקוד, בהתייחסות למובנות דיבור משתמש ב'באופן המובן {env_pronoun}', פותח בשם '{active_name}' וכולל תיווך והקשר. החזר משפט יחיד בלבד."
                                     )
                                     obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
                                     obj_item['ver'] = o_ver + 1
@@ -432,13 +442,13 @@ if st.session_state['goals_list']:
                     with st.spinner("מנסח יעד תפקודי חדש הנגזר ישירות ממטרת-העל..."):
                         client = genai.Client(api_key=api_key)
                         prompt_add = f"""אתה מומחה לניסוח תל"א.
-הוסף יעד אופרטיבי נוסף של השתתפות ותפקוד יומיומי שנגזר ישירות ובלעדית ממטרת-העל: '{goal['goal_title']}' עבור {student_name} ({gender}).
+הוסף יעד אופרטיבי נוסף של השתתפות ותפקוד יומיומי שנגזר ישירות ובלעדית ממטרת-העל: '{goal['goal_title']}' עבור {active_name} ({gender}).
 התבסס על הסגנון והטרמינולוגיה בדוגמאות:
 {examples_context}
 """
                         if add_obj_val.strip():
                             prompt_add += f"\nדגש מיוחד ליעד: {add_obj_val}."
-                        prompt_add += f"\nהקפד לפתוח בשם המפורש '{student_name}' (אל תכתוב 'הילדה'), דגש על השתתפות פעילה ועשייה, לציין רמת תיווך והקשר בשגרת הגן. החזר משפט יחיד בלבד ללא מרכאות."
+                        prompt_add += f"\nהקפד לפתוח בשם המפורש '{active_name}', דגש על השתתפות פעילה, בהתייחסות למובנות להשתמש ב'באופן המובן {env_pronoun}', לציין רמת תיווך והקשר בשגרת הגן. החזר משפט יחיד בלבד ללא מרכאות."
                         res = client.models.generate_content(model='gemini-3.6-flash', contents=prompt_add)
                         goal.setdefault('objectives_list', []).append({
                             "text": res.text.strip().replace('"', '').replace("'", ""), 
@@ -475,22 +485,22 @@ if st.session_state['goals_list']:
                     client = genai.Client(api_key=api_key)
                     add_prompt = f"""
 אתה מומחה לניסוח תל"א בגני חינוך מיוחד.
-נסח מטרה חדשה בתחום '{custom_prompt}' עבור {student_name} ({gender}) על בסיס מאגר הדוגמאות:
+נסח מטרה חדשה בתחום '{custom_prompt}' עבור {active_name} ({gender}) על בסיס מאגר הדוגמאות:
 {examples_context}
 
 כללים:
-1. מטרת-על כללית וכוללת בדגש על השתתפות ותפקוד יומיומי עבור '{student_name}' (ללא 'תרכוש מיומנות').
-2. בדיוק 3 יעדים אופרטיביים המהווים שלבי השתתפות מדורגים (התפתחותיים / תיווך) שנגזרים ממנה ופותחים בשם '{student_name}'.
+1. מטרת-על כללית וכוללת בדגש על השתתפות ותפקוד יומיומי עבור '{active_name}' (ללא 'תרכוש מיומנות'). בהתייחסות למובנות להשתמש ב'באופן המובן {env_pronoun}'.
+2. בדיוק 3 יעדים אופרטיביים המהווים שלבי השתתפות מדורגים (התפתחותיים / תיווך) שנגזרים ממנה ופותחים בשם '{active_name}'.
 3. דרכי הוראה טיפוליות מעשיות.
 
 החזר JSON יחיד בלבד במבנה:
 {{
-  "goal_title": "{student_name} תשתתף / תפעל...",
+  "goal_title": "{active_name} תשתתף / תפעל...",
   "domains": "תחום תפקוד",
   "objectives_list": [
-    {{"text": "{student_name} תשתתף/תבצע (שלב 1)...", "timeframe": "עד סוף השנה"}},
-    {{"text": "{student_name} תשתתף/תבצע (שלב 2)...", "timeframe": "עד סוף השנה"}},
-    {{"text": "{student_name} תשתתף/תבצע (שלב 3)...", "timeframe": "עד סוף השנה"}}
+    {{"text": "{active_name} תשתתף/תבצע (שלב 1)...", "timeframe": "עד סוף השנה"}},
+    {{"text": "{active_name} תשתתף/תבצע (שלב 2)...", "timeframe": "עד סוף השנה"}},
+    {{"text": "{active_name} תשתתף/תבצע (שלב 3)...", "timeframe": "עד סוף השנה"}}
   ],
   "teaching_methods": "• דרך הוראה 1\\n• דרך הוראה 2"
 }}
@@ -518,7 +528,7 @@ if st.session_state['goals_list']:
 
         p_name = doc.add_paragraph()
         p_name.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        p_name.add_run(f"שם התלמיד/ה: {student_name}\n").bold = True
+        p_name.add_run(f"שם התלמיד/ה: {active_name}\n").bold = True
 
         for idx, g in enumerate(st.session_state['goals_list']):
             p_goal = doc.add_paragraph()
@@ -568,6 +578,6 @@ if st.session_state['goals_list']:
     st.download_button(
         label="📥 הורד קובץ Word מעוצב עם טבלאות מלאות",
         data=build_docx(),
-        file_name=f"תלא_{student_name}.docx",
+        file_name=f"תלא_{active_name}.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
