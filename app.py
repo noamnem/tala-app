@@ -19,27 +19,27 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap');
 
-    /* החלת גופן אלף והגדלה ברורה ונוחה של כל הטקסטים */
+    /* החלת גופן אלף וגודל מאוזן ומקצועי לאתר חי */
     html, body, .stMarkdown, p, h1, h2, h3, h4, label, input, textarea, button, select, [class*="css"], details, summary {
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
         text-align: right !important;
-        font-size: 1.18rem !important;
+        font-size: 1.03rem !important;
     }
 
     h1, .main-title {
-        font-size: 2.4rem !important;
+        font-size: 2.1rem !important;
         font-weight: 700 !important;
     }
 
     h2, h3, .stSubheader {
-        font-size: 1.65rem !important;
+        font-size: 1.45rem !important;
         font-weight: 700 !important;
     }
 
     /* כותרות חלונות המטרות */
     [data-testid="stExpander"] details summary p {
-        font-size: 1.22rem !important;
+        font-size: 1.08rem !important;
         font-weight: 700 !important;
         color: #1a1a1a !important;
     }
@@ -48,8 +48,8 @@ st.markdown("""
     [data-testid="stExpander"] details summary p::before {
         content: "";
         display: inline-block;
-        width: 19px;
-        height: 19px;
+        width: 17px;
+        height: 17px;
         margin-left: 8px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23111111'%3E%3Cpath d='M6 3c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1s1-.45 1-1v-6h11.5c.4 0 .75-.24.9-.6.15-.37.07-.79-.2-1.07L16.5 10l2.7-3.33c.27-.28.35-.7.2-1.07-.15-.36-.5-.6-.9-.6H7V4c0-.55-.45-1-1-1z'/%3E%3C/svg%3E");
@@ -72,8 +72,8 @@ st.markdown("""
         width: fit-content !important;
         min-width: unset !important;
         max-width: fit-content !important;
-        padding: 6px 16px !important;
-        margin: 8px 0 !important;
+        padding: 5px 14px !important;
+        margin: 6px 0 !important;
         box-shadow: none !important;
     }
     div[data-testid="stAlert"] > div {
@@ -87,7 +87,7 @@ st.markdown("""
     div[data-testid="stAlert"] * {
         color: #1b5e20 !important;
         font-weight: 400 !important;
-        font-size: 1.1rem !important;
+        font-size: 1.0rem !important;
         background: transparent !important;
     }
 
@@ -123,8 +123,8 @@ st.markdown("""
         color: #0288D1 !important;
         border: 1px solid #bae6fd !important;
         border-radius: 20px !important;
-        padding: 6px 16px !important;
-        font-size: 1.0rem !important;
+        padding: 5px 14px !important;
+        font-size: 0.9rem !important;
         font-weight: bold !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
     }
@@ -145,8 +145,8 @@ st.markdown("""
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
         text-align: center !important;
-        font-size: 1.05rem !important;
-        padding: 7px 8px !important;
+        font-size: 0.98rem !important;
+        padding: 6px 6px !important;
         white-space: nowrap !important;
         background-color: #f0f9ff !important;
         border: 1px solid #7dd3fc !important;
@@ -163,8 +163,8 @@ st.markdown("""
         background-color: #0288D1 !important;
         color: white !important;
         border: none !important;
-        font-size: 1.22rem !important;
-        padding: 11px !important;
+        font-size: 1.15rem !important;
+        padding: 10px !important;
     }
     .main-btn>button:hover {
         background-color: #0277BD !important;
@@ -198,9 +198,9 @@ st.markdown("""
     div.stElementContainer:has(.marker-regen) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-left: 6px;
+        width: 15px;
+        height: 15px;
+        margin-left: 5px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z'/%3E%3C/svg%3E");
         background-size: contain;
@@ -212,9 +212,9 @@ st.markdown("""
     div.stElementContainer:has(.marker-edit) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-left: 6px;
+        width: 15px;
+        height: 15px;
+        margin-left: 5px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E");
         background-size: contain;
@@ -226,9 +226,9 @@ st.markdown("""
     div.stElementContainer:has(.marker-del) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-left: 6px;
+        width: 15px;
+        height: 15px;
+        margin-left: 5px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E");
         background-size: contain;
@@ -240,9 +240,9 @@ st.markdown("""
     div.stElementContainer:has(.marker-plus) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 17px;
-        height: 17px;
-        margin-left: 6px;
+        width: 15px;
+        height: 15px;
+        margin-left: 5px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3E%3C/svg%3E");
         background-size: contain;
@@ -254,9 +254,9 @@ st.markdown("""
         background-color: #0288D1 !important;
         color: #ffffff !important;
         border: none !important;
-        font-size: 1.22rem !important;
+        font-size: 1.15rem !important;
         font-weight: 700 !important;
-        padding: 11px !important;
+        padding: 10px !important;
     }
     .download-btn>button:hover {
         background-color: #0277BD !important;
@@ -266,8 +266,8 @@ st.markdown("""
     div.stElementContainer:has(.marker-download) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 19px;
-        height: 19px;
+        width: 18px;
+        height: 18px;
         margin-left: 8px;
         vertical-align: -3px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z'/%3E%3C/svg%3E");
@@ -284,7 +284,7 @@ st.markdown("""
         direction: ltr !important;
     }
 
-    /* מתיחה מדויקת של חלון דרכי ההוראה והשוואת גודל הפונט */
+    /* מתיחה מדויקת של חלון דרכי ההוראה */
     div.teach-box div[data-baseweb="textarea"],
     div.teach-box textarea,
     textarea[aria-label*="דרכי הוראה"] {
@@ -295,7 +295,7 @@ st.markdown("""
         padding-bottom: 40px !important;
         line-height: 2 !important;
         box-sizing: border-box !important;
-        font-size: 1.18rem !important;
+        font-size: 1.03rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -939,7 +939,7 @@ if st.session_state['goals_list']:
                                 break
                         break
 
-            # 3. עדכון טבלת התפקוד (3 עמודות)
+            # 3. עדכון טבלת התפקוד (3 עמודות) - עמודה ימנית (תחום) בבולד
             func_tables = [t for t in doc.tables if len(t.columns) == 3]
             raw_rows = st.session_state.get('raw_uploaded_table', [])
             valid_uploaded_rows = [r for r in raw_rows if len(r) >= 3 and not all(c.strip() == "" for c in r)]
