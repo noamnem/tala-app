@@ -3,6 +3,7 @@ import io
 import json
 import re
 import time
+import shutil
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -308,8 +309,14 @@ LOCAL_DRIVE_FOLDER = "drive_examples"
 
 @st.cache_data(show_spinner=False)
 def sync_and_load_drive_examples():
-    if not os.path.exists(LOCAL_DRIVE_FOLDER):
-        os.makedirs(LOCAL_DRIVE_FOLDER)
+    # ניקוי מלא של התיקייה המקומית לפני כל הורדה
+    if os.path.exists(LOCAL_DRIVE_FOLDER):
+        try:
+            shutil.rmtree(LOCAL_DRIVE_FOLDER)
+        except Exception:
+            pass
+    os.makedirs(LOCAL_DRIVE_FOLDER, exist_ok=True)
+    
     try:
         gdown.download_folder(DRIVE_FOLDER_URL, output=LOCAL_DRIVE_FOLDER, quiet=True, use_cookies=False)
     except Exception:
@@ -323,8 +330,6 @@ def sync_and_load_drive_examples():
                     try:
                         doc = Document(os.path.join(root, f))
                         text_parts = []
-                        
-                        # קריאה רציפה של פסקאות וטבלאות בסדר ההופעה המדויק שלהן במסמך
                         for element in doc.element.body:
                             if element.tag.endswith('p'):
                                 p = Paragraph(element, doc)
@@ -381,7 +386,8 @@ with st.popover("מאגר דרייב"):
     st.markdown("**סטטוס חיבור ל-Google Drive:**")
     if examples_context:
         num_docs = examples_context.count("=== מאגר דוגמאות מתוך")
-        st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קובצי דוגמאות ללמידת המודל.")
+        num_examples = len(re.findall(r'דוגמה\s+\d+', examples_context))
+        st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קבצים המכילים {num_examples} דוגמאות ללמידת המודל.")
     else:
         st.warning("לא אותרו קבצים בתיקייה (וודאי שהשיתוף פתוח לצפייה לכולם).")
 
