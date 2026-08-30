@@ -6,7 +6,7 @@ import time
 import shutil
 import streamlit as st
 from google import genai
-from google.genai import types
+from google.genai import types, errors
 from docx import Document
 from docx.text.paragraph import Paragraph
 from docx.table import Table
@@ -369,12 +369,14 @@ def call_gemini_with_retry(client, contents, config=None, max_retries=3, initial
             )
         except Exception as e:
             last_err = e
-            err_msg = str(e)
-            if "503" in err_msg or "UNAVAILABLE" in err_msg or "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                if attempt < max_retries - 1:
-                    time.sleep(delay)
-                    delay *= 2
-                    continue
+            is_server_err = isinstance(e, (errors.ServerError, errors.APIError))
+            err_msg = str(e).upper()
+            is_retryable = is_server_err or any(term in err_msg for term in ["503", "500", "502", "504", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "OVERLOADED"])
+            
+            if is_retryable and attempt < max_retries - 1:
+                time.sleep(delay)
+                delay *= 2
+                continue
             raise e
     raise last_err
 
@@ -572,8 +574,9 @@ if st.session_state['goals_list']:
                     st.markdown('<span class="marker-regen"></span>', unsafe_allow_html=True)
                     if st.button("נסח מחדש", key=f"btn_regen_goal_{idx}"):
                         with st.spinner("מנסח חלופה תפקודית כוללת למטרה..."):
-                            client = genai.Client(api_key=api_key)
-                            regen_prompt = f"""אתה מומחה לניסוח תל\"א בגני חינוך מיוחד.
+                            try:
+                                client = genai.Client(api_key=api_key)
+                                regen_prompt = f"""אתה מומחה לניסוח תל\"א בגני חינוך מיוחד.
 הצע ניסוח חלופי, כללי ותפקודי (מוכוון השתתפות פעילה בשגרת הגן) למטרת-העל עבור {active_name} ({gender}).
 התבסס באופן הדוק על הסגנון והשפה במאגר הדוגמאות:
 {examples_context}
@@ -587,14 +590,16 @@ if st.session_state['goals_list']:
 2. מטרת-על כללית וכוללת, קצרה ותמציתית, ללא תנאים ספציפיים בכותרת.
 3. השתמש בשם המפורש '{active_name}' ואל תכתוב 'הילדה' או 'הילד' (אלא אם זהו השם שנבחר).
 4. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
-                            res = call_gemini_with_retry(
-                                client=client,
-                                contents=regen_prompt,
-                                config=types.GenerateContentConfig(temperature=0.2)
-                            )
-                            goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
-                            goal['ver'] = g_ver + 1
-                            st.rerun()
+                                res = call_gemini_with_retry(
+                                    client=client,
+                                    contents=regen_prompt,
+                                    config=types.GenerateContentConfig(temperature=0.2)
+                                )
+                                goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
+                                goal['ver'] = g_ver + 1
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"שגיאה בניסוח מחדש: {e}")
 
                 with c_g2:
                     st.markdown('<span class="marker-edit"></span>', unsafe_allow_html=True)
@@ -626,17 +631,20 @@ if st.session_state['goals_list']:
 
                         if submit_edit_g and prompt_g_val.strip():
                             with st.spinner("מעדכן ניסוח מטרה..."):
-                                client = genai.Client(api_key=api_key)
-                                res = call_gemini_with_retry(
-                                    client=client,
-                                    contents=f"ערוך את מטרת-העל עבור {active_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על סגנון הדוגמאות מתיקיית הדרייב ועל ניסוח תפקודי כולל, קצר ובהיר. השתמש בשם המפורש '{active_name}'. החזר טקסט בלבד.",
-                                    config=types.GenerateContentConfig(temperature=0.2)
-                                )
-                                goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
-                                goal['ver'] = g_ver + 1
-                                st.session_state[f"show_edit_g_{idx}"] = False
-                                st.session_state[f"edit_g_p_{idx}"] = ""
-                                st.rerun()
+                                try:
+                                    client = genai.Client(api_key=api_key)
+                                    res = call_gemini_with_retry(
+                                        client=client,
+                                        contents=f"ערוך את מטרת-העל עבור {active_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על סגנון הדוגמאות מתיקיית הדרייב ועל ניסוח תפקודי כולל, קצר ובהיר. השתמש בשם המפורש '{active_name}'. החזר טקסט בלבד.",
+                                        config=types.GenerateContentConfig(temperature=0.2)
+                                    )
+                                    goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
+                                    goal['ver'] = g_ver + 1
+                                    st.session_state[f"show_edit_g_{idx}"] = False
+                                    st.session_state[f"edit_g_p_{idx}"] = ""
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"שגיאה בעדכון מטרה: {e}")
 
             st.markdown("---")
 
@@ -662,8 +670,9 @@ if st.session_state['goals_list']:
                             st.markdown('<span class="marker-regen"></span>', unsafe_allow_html=True)
                             if st.button("נסח מחדש", key=f"btn_reg_obj_{idx}_{o_idx}"):
                                 with st.spinner("מנסח יעד ספציפי וממוקד..."):
-                                    client = genai.Client(api_key=api_key)
-                                    regen_obj_prompt = f"""אתה מומחה לניסוח יעדים אופרטיביים בתל\"א לגני חינוך מיוחד.
+                                    try:
+                                        client = genai.Client(api_key=api_key)
+                                        regen_obj_prompt = f"""אתה מומחה לניסוח יעדים אופרטיביים בתל\"א לגני חינוך מיוחד.
 הצע ניסוח חלופי ליעד אופרטיבי זה בלבד עבור {active_name} ({gender}) הנגזר ממטרת-העל '{goal['goal_title']}'.
 התבסס באופן מלא על שפת הדוגמאות במאגר:
 {examples_context}
@@ -677,14 +686,16 @@ if st.session_state['goals_list']:
 2. ניסוח בהיר, קצר וישיר שפותח בשם המפורש '{active_name}'.
 3. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות.
 4. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
-                                    res = call_gemini_with_retry(
-                                        client=client,
-                                        contents=regen_obj_prompt,
-                                        config=types.GenerateContentConfig(temperature=0.2)
-                                    )
-                                    obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
-                                    obj_item['ver'] = o_ver + 1
-                                    st.rerun()
+                                        res = call_gemini_with_retry(
+                                            client=client,
+                                            contents=regen_obj_prompt,
+                                            config=types.GenerateContentConfig(temperature=0.2)
+                                        )
+                                        obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
+                                        obj_item['ver'] = o_ver + 1
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"שגיאה בניסוח יעד: {e}")
 
                         with c_b2:
                             st.markdown('<span class="marker-edit"></span>', unsafe_allow_html=True)
@@ -714,17 +725,20 @@ if st.session_state['goals_list']:
 
                                 if submit_pr_obj and prompt_obj_val.strip():
                                     with st.spinner("מעדכן יעד..."):
-                                        client = genai.Client(api_key=api_key)
-                                        res = call_gemini_with_retry(
-                                            client=client,
-                                            contents=f"ערוך את היעד של {active_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', עוסק בתפקוד יחיד ומוגדר בלבד, ללא סרבול, ופותח בשם '{active_name}'. החזר משפט יחיד בלבד.",
-                                            config=types.GenerateContentConfig(temperature=0.2)
-                                        )
-                                        obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
-                                        obj_item['ver'] = o_ver + 1
-                                        st.session_state[f"show_pr_obj_{idx}_{o_idx}"] = False
-                                        st.session_state[f"pr_obj_{idx}_{o_idx}"] = ""
-                                        st.rerun()
+                                        try:
+                                            client = genai.Client(api_key=api_key)
+                                            res = call_gemini_with_retry(
+                                                client=client,
+                                                contents=f"ערוך את היעד של {active_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', עוסק בתפקוד יחיד ומוגדר בלבד, ללא סרבול, ופותח בשם '{active_name}'. החזר משפט יחיד בלבד.",
+                                                config=types.GenerateContentConfig(temperature=0.2)
+                                            )
+                                            obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
+                                            obj_item['ver'] = o_ver + 1
+                                            st.session_state[f"show_pr_obj_{idx}_{o_idx}"] = False
+                                            st.session_state[f"pr_obj_{idx}_{o_idx}"] = ""
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"שגיאה בעדכון יעד: {e}")
 
                     with col_obj_tf:
                         st.markdown("**פרק זמן להשגה**")
@@ -744,24 +758,27 @@ if st.session_state['goals_list']:
                     st.markdown('<span class="marker-plus"></span>', unsafe_allow_html=True)
                     if st.button("הוסף יעד למטרה זו", key=f"do_add_obj_auto_{idx}"):
                         with st.spinner("מנסח יעד תפקודי חדש וממוקד..."):
-                            client = genai.Client(api_key=api_key)
-                            prompt_add = f"""אתה מומחה לניסוח תל\"א.
+                            try:
+                                client = genai.Client(api_key=api_key)
+                                prompt_add = f"""אתה מומחה לניסוח תל\"א.
 הוסף יעד אופרטיבי נוסף, ספציפי וממוקד בתפקוד יחיד, שנגזר ישירות ממטרת-העל: '{goal['goal_title']}' עבור {active_name} ({gender}).
 התבסס על הסגנון והטרמינולוגיה בדוגמאות:
 {examples_context}
 
 הקפד לפתוח בשם המפורש '{active_name}', לשמור על ניסוח קצר וממוקד בתפקוד יחיד ללא סרבול. החזר משפט יחיד בלבד ללא מרכאות."""
-                            res = call_gemini_with_retry(
-                                client=client,
-                                contents=prompt_add,
-                                config=types.GenerateContentConfig(temperature=0.2)
-                            )
-                            goal.setdefault('objectives_list', []).append({
-                                "text": res.text.strip().replace('"', '').replace("'", ""), 
-                                "timeframe": "עד סוף השנה",
-                                "ver": 0
-                            })
-                            st.rerun()
+                                res = call_gemini_with_retry(
+                                    client=client,
+                                    contents=prompt_add,
+                                    config=types.GenerateContentConfig(temperature=0.2)
+                                )
+                                goal.setdefault('objectives_list', []).append({
+                                    "text": res.text.strip().replace('"', '').replace("'", ""), 
+                                    "timeframe": "עד סוף השנה",
+                                    "ver": 0
+                                })
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"שגיאה בהוספת יעד (עומס זמני בשרתי המודל): {e}. אנא נסי שוב.")
 
                 # שורת הוספת יעד על פי תיאור עם כפתור שלח
                 with st.form(key=f"form_add_obj_custom_{idx}", clear_on_submit=False, border=False):
@@ -778,26 +795,29 @@ if st.session_state['goals_list']:
 
                     if submit_add_obj and add_obj_val.strip():
                         with st.spinner("מנסח יעד תפקודי חדש וממוקד..."):
-                            client = genai.Client(api_key=api_key)
-                            prompt_add = f"""אתה מומחה לניסוח תל\"א.
+                            try:
+                                client = genai.Client(api_key=api_key)
+                                prompt_add = f"""אתה מומחה לניסוח תל\"א.
 הוסף יעד אופרטיבי נוסף, ספציפי וממוקד בתפקוד יחיד, שנגזר ישירות ממטרת-העל: '{goal['goal_title']}' עבור {active_name} ({gender}).
 התבסס על הסגנון והטרמינולוגיה בדוגמאות:
 {examples_context}
 
 דגש מיוחד ליעד: {add_obj_val}.
 הקפד לפתוח בשם המפורש '{active_name}', לשמור על ניסוח קצר וממוקד בתפקוד יחיד ללא סרבול. החזר משפט יחיד בלבד ללא מרכאות."""
-                            res = call_gemini_with_retry(
-                                client=client,
-                                contents=prompt_add,
-                                config=types.GenerateContentConfig(temperature=0.2)
-                            )
-                            goal.setdefault('objectives_list', []).append({
-                                "text": res.text.strip().replace('"', '').replace("'", ""), 
-                                "timeframe": "עד סוף השנה",
-                                "ver": 0
-                            })
-                            st.session_state[f"add_obj_p_{idx}"] = ""
-                            st.rerun()
+                                res = call_gemini_with_retry(
+                                    client=client,
+                                    contents=prompt_add,
+                                    config=types.GenerateContentConfig(temperature=0.2)
+                                )
+                                goal.setdefault('objectives_list', []).append({
+                                    "text": res.text.strip().replace('"', '').replace("'", ""), 
+                                    "timeframe": "עד סוף השנה",
+                                    "ver": 0
+                                })
+                                st.session_state[f"add_obj_p_{idx}"] = ""
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"שגיאה בהוספת יעד: {e}. אנא נסי שוב.")
 
             with t_col_right:
                 st.markdown("**דרכי הוראה, השיטות והאמצעים**")
@@ -828,8 +848,9 @@ if st.session_state['goals_list']:
 
         if submit_add_goal and custom_prompt.strip():
             with st.spinner("מנסח מטרה ויעדים תפקודיים על בסיס הדוגמאות..."):
-                client = genai.Client(api_key=api_key)
-                add_prompt = f"""
+                try:
+                    client = genai.Client(api_key=api_key)
+                    add_prompt = f"""
 אתה מומחה לניסוח תל\"א בגני חינוך מיוחד.
 נסח מטרה חדשה בתחום '{custom_prompt}' עבור {active_name} ({gender}) על בסיס מאגר הדוגמאות:
 {examples_context}
@@ -851,22 +872,24 @@ if st.session_state['goals_list']:
   "teaching_methods": "• דרך הוראה 1\\n• דרך הוראה 2"
 }}
 """
-                res = call_gemini_with_retry(
-                    client=client,
-                    contents=add_prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.2
+                    res = call_gemini_with_retry(
+                        client=client,
+                        contents=add_prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            temperature=0.2
+                        )
                     )
-                )
-                new_item = safe_parse_json(res.text)
-                if isinstance(new_item, list) and len(new_item) > 0:
-                    new_item = new_item[0]
-                new_item['ver'] = 0
-                for obj in new_item.get('objectives_list', []):
-                    obj['ver'] = 0
-                st.session_state['goals_list'].append(new_item)
-                st.rerun()
+                    new_item = safe_parse_json(res.text)
+                    if isinstance(new_item, list) and len(new_item) > 0:
+                        new_item = new_item[0]
+                    new_item['ver'] = 0
+                    for obj in new_item.get('objectives_list', []):
+                        obj['ver'] = 0
+                    st.session_state['goals_list'].append(new_item)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"שגיאה בהוספת מטרה: {e}. אנא נסי שוב.")
 
     # ייצוא קובץ Word
     st.markdown("---")
