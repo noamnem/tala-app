@@ -385,8 +385,8 @@ with st.popover("מאגר דרייב"):
     st.markdown("**סטטוס חיבור ל-Google Drive:**")
     if examples_context:
         num_docs = examples_context.count("=== מאגר דוגמאות מתוך")
-        # ספירה גמישה הכוללת ספרות וכן אותיות עבריות (א-ת)
-        found_headers = re.findall(r'(?:דוגמ[הא]|טבל[הא]|ילד|ילדה)\s*[\:\-\–\.\#]?\s*(?:מס\'|מספר)?\s*(?:\d+|[א-ת][\'"״׳]?[א-ת]?)', examples_context)
+        # ספירה מדויקת של כותרות דוגמה במספרים (1, 22) או באותיות (א, ב, י"ב)
+        found_headers = re.findall(r'(?:^|\n|\b)דוגמ[הא]\s*(?:מס\'|מספר)?\s*(?:\d+|[א-ת](?:[\'״"][א-ת])?)\b', examples_context)
         num_examples = len(found_headers) if found_headers else num_docs
         st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קבצים המכילים {num_examples} דוגמאות ללמידת המודל.")
     else:
