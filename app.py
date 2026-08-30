@@ -363,7 +363,7 @@ def call_gemini_with_retry(client, contents, config=None, max_retries=3, initial
     for attempt in range(max_retries):
         try:
             return client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=contents,
                 config=config
             )
@@ -385,7 +385,6 @@ with st.popover("מאגר דרייב"):
     st.markdown("**סטטוס חיבור ל-Google Drive:**")
     if examples_context:
         num_docs = examples_context.count("=== מאגר דוגמאות מתוך")
-        # ספירה מדויקת של כותרות דוגמה במספרים (1, 22) או באותיות (א, ב, י"ב)
         found_headers = re.findall(r'(?:^|\n|\b)דוגמ[הא]\s*(?:מס\'|מספר)?\s*(?:\d+|[א-ת](?:[\'״"][א-ת])?)\b', examples_context)
         num_examples = len(found_headers) if found_headers else num_docs
         st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קבצים המכילים {num_examples} דוגמאות ללמידת המודל.")
