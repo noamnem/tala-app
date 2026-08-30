@@ -309,7 +309,6 @@ LOCAL_DRIVE_FOLDER = "drive_examples"
 
 @st.cache_data(show_spinner=False)
 def sync_and_load_drive_examples():
-    # ניקוי מלא של התיקייה המקומית לפני כל הורדה
     if os.path.exists(LOCAL_DRIVE_FOLDER):
         try:
             shutil.rmtree(LOCAL_DRIVE_FOLDER)
@@ -386,7 +385,9 @@ with st.popover("מאגר דרייב"):
     st.markdown("**סטטוס חיבור ל-Google Drive:**")
     if examples_context:
         num_docs = examples_context.count("=== מאגר דוגמאות מתוך")
-        num_examples = len(re.findall(r'דוגמה\s+\d+', examples_context))
+        # ספירה גמישה הכוללת ספרות וכן אותיות עבריות (א-ת)
+        found_headers = re.findall(r'(?:דוגמ[הא]|טבל[הא]|ילד|ילדה)\s*[\:\-\–\.\#]?\s*(?:מס\'|מספר)?\s*(?:\d+|[א-ת][\'"״׳]?[א-ת]?)', examples_context)
+        num_examples = len(found_headers) if found_headers else num_docs
         st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קבצים המכילים {num_examples} דוגמאות ללמידת המודל.")
     else:
         st.warning("לא אותרו קבצים בתיקייה (וודאי שהשיתוף פתוח לצפייה לכולם).")
