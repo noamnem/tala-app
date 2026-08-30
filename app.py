@@ -2,10 +2,13 @@ import os
 import io
 import json
 import re
+import time
 import streamlit as st
 from google import genai
 from google.genai import types
 from docx import Document
+from docx.text.paragraph import Paragraph
+from docx.table import Table
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -240,9 +243,9 @@ st.markdown("""
     div.stElementContainer:has(.marker-plus) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 15px;
-        height: 15px;
-        margin-left: 5px;
+        width: 16px;
+        height: 16px;
+        margin-left: 6px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3E%3C/svg%3E");
         background-size: contain;
@@ -315,15 +318,26 @@ def sync_and_load_drive_examples():
     combined_examples = []
     if os.path.exists(LOCAL_DRIVE_FOLDER):
         for root, _, files in os.walk(LOCAL_DRIVE_FOLDER):
-            for f in files:
+            for f in sorted(files):
                 if f.endswith('.docx') and not f.startswith('~$'):
                     try:
                         doc = Document(os.path.join(root, f))
-                        text_parts = [p.text for p in doc.paragraphs if p.text.strip()]
-                        for table in doc.tables:
-                            for row in table.rows:
-                                text_parts.append(" | ".join([c.text.replace("\n", " ").strip() for c in row.cells]))
-                        combined_examples.append(f"=== דוגמת תל\"א מקצועית מתוך ({f}) ===\n" + "\n".join(text_parts))
+                        text_parts = []
+                        
+                        # קריאה רציפה של פסקאות וטבלאות בסדר ההופעה המדויק שלהן במסמך
+                        for element in doc.element.body:
+                            if element.tag.endswith('p'):
+                                p = Paragraph(element, doc)
+                                if p.text.strip():
+                                    text_parts.append(p.text.strip())
+                            elif element.tag.endswith('tbl'):
+                                t = Table(element, doc)
+                                for row in t.rows:
+                                    row_text = " | ".join([c.text.replace("\n", " ").strip() for c in row.cells if c.text.strip()])
+                                    if row_text:
+                                        text_parts.append(row_text)
+                                        
+                        combined_examples.append(f"=== מאגר דוגמאות מתוך ({f}) ===\n" + "\n".join(text_parts))
                     except Exception:
                         pass
     return "\n\n".join(combined_examples)
@@ -339,14 +353,35 @@ def safe_parse_json(text_content):
         t = "\n".join(lines).strip()
     return json.loads(t)
 
+def call_gemini_with_retry(client, contents, config=None, max_retries=3, initial_delay=2.0):
+    delay = initial_delay
+    last_err = None
+    for attempt in range(max_retries):
+        try:
+            return client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            last_err = e
+            err_msg = str(e)
+            if "503" in err_msg or "UNAVAILABLE" in err_msg or "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                if attempt < max_retries - 1:
+                    time.sleep(delay)
+                    delay *= 2
+                    continue
+            raise e
+    raise last_err
+
 with st.spinner("מסנכרן דוגמאות מתיקיית הדרייב..."):
     examples_context = sync_and_load_drive_examples()
 
 with st.popover("מאגר דרייב"):
     st.markdown("**סטטוס חיבור ל-Google Drive:**")
     if examples_context:
-        num_docs = examples_context.count("=== דוגמת תל\"א מקצועית")
-        st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קובצי תל\"א ללמידת המודל.")
+        num_docs = examples_context.count("=== מאגר דוגמאות מתוך")
+        st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קובצי דוגמאות ללמידת המודל.")
     else:
         st.warning("לא אותרו קבצים בתיקייה (וודאי שהשיתוף פתוח לצפייה לכולם).")
 
@@ -460,8 +495,8 @@ if st.button("הפק מטרות ויעדים"):
 ]
 """
                 client = genai.Client(api_key=api_key)
-                response = client.models.generate_content(
-                    model='gemini-3.6-flash',
+                response = call_gemini_with_retry(
+                    client=client,
                     contents=f"נתוני התפקוד של {active_name} ({gender}):\n{input_text}",
                     config=types.GenerateContentConfig(
                         system_instruction=system_prompt,
@@ -490,7 +525,7 @@ if st.button("הפק מטרות ויעדים"):
                 st.session_state['just_generated'] = True
                 st.rerun()
             except Exception as e:
-                st.error(f"שגיאה בהפקה: {e}")
+                st.error(f"שגיאה בהפקה (עומס זמני בשרתים): {e}. אנא נסי שוב בעוד מספר שניות.")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # חיווי הצלחה ירוק
@@ -546,8 +581,8 @@ if st.session_state['goals_list']:
 2. מטרת-על כללית וכוללת, קצרה ותמציתית, ללא תנאים ספציפיים בכותרת.
 3. השתמש בשם המפורש '{active_name}' ואל תכתוב 'הילדה' או 'הילד' (אלא אם זהו השם שנבחר).
 4. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
-                            res = client.models.generate_content(
-                                model='gemini-3.6-flash',
+                            res = call_gemini_with_retry(
+                                client=client,
                                 contents=regen_prompt,
                                 config=types.GenerateContentConfig(temperature=0.2)
                             )
@@ -586,8 +621,8 @@ if st.session_state['goals_list']:
                         if submit_edit_g and prompt_g_val.strip():
                             with st.spinner("מעדכן ניסוח מטרה..."):
                                 client = genai.Client(api_key=api_key)
-                                res = client.models.generate_content(
-                                    model='gemini-3.6-flash',
+                                res = call_gemini_with_retry(
+                                    client=client,
                                     contents=f"ערוך את מטרת-העל עבור {active_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על סגנון הדוגמאות מתיקיית הדרייב ועל ניסוח תפקודי כולל, קצר ובהיר. השתמש בשם המפורש '{active_name}'. החזר טקסט בלבד.",
                                     config=types.GenerateContentConfig(temperature=0.2)
                                 )
@@ -636,8 +671,8 @@ if st.session_state['goals_list']:
 2. ניסוח בהיר, קצר וישיר שפותח בשם המפורש '{active_name}'.
 3. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות.
 4. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
-                                    res = client.models.generate_content(
-                                        model='gemini-3.6-flash',
+                                    res = call_gemini_with_retry(
+                                        client=client,
                                         contents=regen_obj_prompt,
                                         config=types.GenerateContentConfig(temperature=0.2)
                                     )
@@ -674,8 +709,8 @@ if st.session_state['goals_list']:
                                 if submit_pr_obj and prompt_obj_val.strip():
                                     with st.spinner("מעדכן יעד..."):
                                         client = genai.Client(api_key=api_key)
-                                        res = client.models.generate_content(
-                                            model='gemini-3.6-flash',
+                                        res = call_gemini_with_retry(
+                                            client=client,
                                             contents=f"ערוך את היעד של {active_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', עוסק בתפקוד יחיד ומוגדר בלבד, ללא סרבול, ופותח בשם '{active_name}'. החזר משפט יחיד בלבד.",
                                             config=types.GenerateContentConfig(temperature=0.2)
                                         )
@@ -710,8 +745,8 @@ if st.session_state['goals_list']:
 {examples_context}
 
 הקפד לפתוח בשם המפורש '{active_name}', לשמור על ניסוח קצר וממוקד בתפקוד יחיד ללא סרבול. החזר משפט יחיד בלבד ללא מרכאות."""
-                            res = client.models.generate_content(
-                                model='gemini-3.6-flash',
+                            res = call_gemini_with_retry(
+                                client=client,
                                 contents=prompt_add,
                                 config=types.GenerateContentConfig(temperature=0.2)
                             )
@@ -745,8 +780,8 @@ if st.session_state['goals_list']:
 
 דגש מיוחד ליעד: {add_obj_val}.
 הקפד לפתוח בשם המפורש '{active_name}', לשמור על ניסוח קצר וממוקד בתפקוד יחיד ללא סרבול. החזר משפט יחיד בלבד ללא מרכאות."""
-                            res = client.models.generate_content(
-                                model='gemini-3.6-flash',
+                            res = call_gemini_with_retry(
+                                client=client,
                                 contents=prompt_add,
                                 config=types.GenerateContentConfig(temperature=0.2)
                             )
@@ -810,8 +845,8 @@ if st.session_state['goals_list']:
   "teaching_methods": "• דרך הוראה 1\\n• דרך הוראה 2"
 }}
 """
-                res = client.models.generate_content(
-                    model='gemini-3.6-flash',
+                res = call_gemini_with_retry(
+                    client=client,
                     contents=add_prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
