@@ -3,6 +3,7 @@ import io
 import json
 import re
 import time
+import uuid
 import shutil
 import streamlit as st
 from google import genai
@@ -45,9 +46,17 @@ st.markdown("""
         border-top: 1px solid #e2e8f0 !important;
     }
 
-    /* הסתרת סרגל הכלים העליון של Streamlit (GitHub, Share, 3 נקודות) */
-    header[data-testid="stHeader"] {
+    /* הסתרת סרגל הכלים העליון של Streamlit (GitHub, Share, 3 נקודות) לכל המשתמשים */
+    header[data-testid="stHeader"],
+    [data-testid="stHeader"],
+    .stAppHeader,
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"],
+    #MainMenu {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
     }
 
     /* צמצום מרווחי אלמנטים פנימיים בתוך חלונות המטרות */
@@ -179,7 +188,7 @@ st.markdown("""
     /* כפתור סטטוס דרייב תכלת */
     div[data-testid="stPopover"] {
         position: fixed !important;
-        top: 15px !important;
+        top: 12px !important;
         left: 20px !important;
         right: auto !important;
         width: auto !important;
@@ -207,15 +216,29 @@ st.markdown("""
     }
 
     /* כפתור בטל שינוי בשורה העליונה הקפואה בצד ימין */
-    div.undo-top-bar {
+    .marker-undo-top {
+        display: none !important;
+    }
+    div[data-testid="element-container"]:has(.marker-undo-top),
+    div.stElementContainer:has(.marker-undo-top) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 0 !important;
+    }
+    div[data-testid="element-container"]:has(.marker-undo-top) + div[data-testid="element-container"],
+    div.stElementContainer:has(.marker-undo-top) + div.stElementContainer {
         position: fixed !important;
-        top: 15px !important;
+        top: 12px !important;
         right: 20px !important;
         left: auto !important;
         width: auto !important;
         z-index: 999999 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
-    div.undo-top-bar button {
+    div[data-testid="element-container"]:has(.marker-undo-top) + div[data-testid="element-container"] button,
+    div.stElementContainer:has(.marker-undo-top) + div.stElementContainer button {
         width: auto !important;
         min-width: unset !important;
         background-color: #f0f9ff !important;
@@ -227,11 +250,13 @@ st.markdown("""
         font-weight: bold !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
     }
-    div.undo-top-bar button:hover {
+    div[data-testid="element-container"]:has(.marker-undo-top) + div[data-testid="element-container"] button:hover,
+    div.stElementContainer:has(.marker-undo-top) + div.stElementContainer button:hover {
         background-color: #e0f2fe !important;
         border-color: #0288D1 !important;
     }
-    div.undo-top-bar button p::before {
+    div[data-testid="element-container"]:has(.marker-undo-top) + div[data-testid="element-container"] button p::before,
+    div.stElementContainer:has(.marker-undo-top) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
         width: 15px;
@@ -481,6 +506,15 @@ def safe_parse_json(text_content):
         t = "\n".join(lines).strip()
     return json.loads(t)
 
+def ensure_unique_ids(goals):
+    """מוודא שלכל מטרה ולכל יעד יש מזהה ייחודי קבוע למניעת בלבול בעת מחיקה"""
+    for g in goals:
+        if 'id' not in g:
+            g['id'] = f"g_{uuid.uuid4().hex[:8]}"
+        for o in g.get('objectives_list', []):
+            if 'id' not in o:
+                o['id'] = f"o_{uuid.uuid4().hex[:8]}"
+
 def call_gemini_with_retry(client, contents, config=None, max_retries=3, initial_delay=2.0):
     delay = initial_delay
     last_err = None
@@ -505,7 +539,7 @@ def call_gemini_with_retry(client, contents, config=None, max_retries=3, initial
     raise last_err
 
 def push_to_history():
-    """שומר צילום מצב של המטרות והיעדים במחסנית ההיסטוריה לפני ביצוע שינוי"""
+    """שומר צילום מצב במחסנית ההיסטוריה לפני ביצוע שינוי"""
     if 'goals_list' in st.session_state and st.session_state['goals_list']:
         if 'history_stack' not in st.session_state:
             st.session_state['history_stack'] = []
@@ -517,21 +551,6 @@ def push_to_history():
 
 with st.spinner("מסנכרן דוגמאות מתיקיית הדרייב..."):
     examples_context = sync_and_load_drive_examples()
-
-# כפתור "בטל שינוי" בשורה העליונה הקפואה בצד ימין
-if st.session_state.get('history_stack'):
-    st.markdown('<div class="undo-top-bar">', unsafe_allow_html=True)
-    if st.button("בטל שינוי", key="btn_global_undo"):
-        popped = st.session_state['history_stack'].pop()
-        restored = json.loads(popped)
-        for g in restored:
-            g['ver'] = g.get('ver', 0) + 1
-            for o in g.get('objectives_list', []):
-                o['ver'] = o.get('ver', 0) + 1
-        st.session_state['goals_list'] = restored
-        st.session_state['last_known_state'] = json.dumps(restored, ensure_ascii=False)
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # כפתור סטטוס Google Drive בצד שמאל בשורה העליונה הקפואה
 with st.popover("מאגר דרייב"):
@@ -551,6 +570,18 @@ with st.popover("מאגר דרייב"):
 
     if st.button("רענן מאגר דרייב", key="refresh_drive_btn"):
         st.cache_data.clear()
+        st.rerun()
+
+# כפתור "בטל שינוי" קבוע בראש העמוד מצד ימין באותה שורה קפואה
+if st.session_state.get('history_stack'):
+    st.markdown('<span class="marker-undo-top"></span>', unsafe_allow_html=True)
+    if st.button("בטל שינוי", key="btn_global_undo"):
+        popped = st.session_state['history_stack'].pop()
+        restored = json.loads(popped)
+        ensure_unique_ids(restored)
+        st.session_state['goals_list'] = restored
+        st.session_state['state_rev'] = st.session_state.get('state_rev', 0) + 1
+        st.session_state['last_known_state'] = json.dumps(restored, ensure_ascii=False)
         st.rerun()
 
 # כותרת ראשית – טקסט שחור, בולד וגדול (לחיצה עליה מרעננת ומאפסת למסך הבית)
@@ -695,21 +726,20 @@ if st.button("הפק מטרות ויעדים"):
                 parsed_data = safe_parse_json(response.text)
                 parsed_data = parsed_data[:3]
                 for item in parsed_data:
-                    item['ver'] = 0
                     if "objectives" in item and "objectives_list" not in item:
                         lines = [l.strip(" •\n\r") for l in item["objectives"].split("\n") if l.strip()]
-                        item["objectives_list"] = [{"text": l, "timeframe": item.get("timeframe", "עד סוף השנה"), "ver": 0} for l in lines]
+                        item["objectives_list"] = [{"text": l, "timeframe": item.get("timeframe", "עד סוף השנה")} for l in lines]
 
                     item_objs = item.get("objectives_list", [])[:3]
                     while len(item_objs) < 3:
-                        item_objs.append({"text": f"{active_name} תשתתף בפעילות תפקודית מותאמת בהנחיית הצוות", "timeframe": "עד סוף השנה", "ver": 0})
-                    for obj in item_objs:
-                        obj['ver'] = 0
+                        item_objs.append({"text": f"{active_name} תשתתף בפעילות תפקודית מותאמת בהנחיית הצוות", "timeframe": "עד סוף השנה"})
                     item['objectives_list'] = item_objs
 
+                ensure_unique_ids(parsed_data)
                 st.session_state['goals_list'] = parsed_data
                 st.session_state['current_input_text'] = input_text
                 st.session_state['history_stack'] = []
+                st.session_state['state_rev'] = 0
                 st.session_state['last_known_state'] = json.dumps(parsed_data, ensure_ascii=False)
                 st.session_state['just_generated'] = True
                 st.rerun()
@@ -724,29 +754,31 @@ if st.session_state.get('just_generated', False) and st.session_state.get('goals
 
 # ממשק עריכה אינטראקטיבי
 if st.session_state['goals_list']:
+    ensure_unique_ids(st.session_state['goals_list'])
     active_name = student_name.strip() if student_name.strip() else ("הילדה" if "נקבה" in gender else "הילד")
     current_class = st.session_state.get('selected_class', class_group)
     active_class_context = get_filtered_examples(examples_context, current_class)
+    rev = st.session_state.get('state_rev', 0)
 
     st.markdown("---")
     st.subheader("2. עריכה, דיוק והתאמת המטרות")
 
     for idx, goal in enumerate(st.session_state['goals_list']):
-        g_ver = goal.get('ver', 0)
+        g_id = goal['id']
         current_title = goal.get('goal_title', '')
 
-        with st.expander(f"מטרה {idx+1}: {current_title}", expanded=True, key=f"goal_expander_{idx}"):
-            # 1. כותרת מטרה ותחומי תפקוד
+        with st.expander(f"מטרה {idx+1}: {current_title}", expanded=True, key=f"goal_expander_{g_id}"):
+            # 1. כותרת מטרה ותחומי תפקוד (מקושרים למזהה קבוע ולמונה גרסה)
             goal['goal_title'] = st.text_input(
                 f"כותרת מטרה {idx+1}:", 
                 value=current_title, 
-                key=f"title_{idx}_{g_ver}"
+                key=f"title_{g_id}_{rev}"
             )
 
             goal['domains'] = st.text_input(
                 f"תחומי תפקוד:", 
                 value=goal.get('domains', ''), 
-                key=f"dom_{idx}_{g_ver}"
+                key=f"dom_{g_id}_{rev}"
             )
 
             # שורת כפתורי פעולה למטרה
@@ -756,7 +788,7 @@ if st.session_state['goals_list']:
 
                 with c_g1:
                     st.markdown('<span class="marker-regen"></span>', unsafe_allow_html=True)
-                    if st.button("נסח מחדש", key=f"btn_regen_goal_{idx}"):
+                    if st.button("נסח מחדש", key=f"btn_regen_goal_{g_id}"):
                         with st.spinner("מנסח חלופה תפקודית כוללת למטרה..."):
                             try:
                                 client = genai.Client(api_key=api_key)
@@ -781,7 +813,7 @@ if st.session_state['goals_list']:
                                 )
                                 push_to_history()
                                 goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
-                                goal['ver'] = g_ver + 1
+                                st.session_state['state_rev'] = rev + 1
                                 st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                 st.rerun()
                             except Exception as e:
@@ -789,29 +821,30 @@ if st.session_state['goals_list']:
 
                 with c_g2:
                     st.markdown('<span class="marker-edit"></span>', unsafe_allow_html=True)
-                    if st.button("ערוך לפי תיאור", key=f"btn_toggle_edit_g_{idx}"):
-                        st.session_state[f"show_edit_g_{idx}"] = not st.session_state.get(f"show_edit_g_{idx}", False)
+                    if st.button("ערוך לפי תיאור", key=f"btn_toggle_edit_g_{g_id}"):
+                        st.session_state[f"show_edit_g_{g_id}"] = not st.session_state.get(f"show_edit_g_{g_id}", False)
                         st.rerun()
 
                 with c_g3:
                     st.markdown('<span class="marker-del"></span>', unsafe_allow_html=True)
-                    if st.button("מחק מטרה", key=f"del_{idx}"):
+                    if st.button("מחק מטרה", key=f"del_goal_{g_id}"):
                         push_to_history()
-                        st.session_state['goals_list'].pop(idx)
+                        st.session_state['goals_list'] = [g for g in st.session_state['goals_list'] if g.get('id') != g_id]
+                        st.session_state['state_rev'] = rev + 1
                         st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                         st.rerun()
 
             # חלון עריכת מטרה שנפתח רק בלחיצה
-            if st.session_state.get(f"show_edit_g_{idx}", False):
+            if st.session_state.get(f"show_edit_g_{g_id}", False):
                 c_form_g, _ = st.columns([5, 5], gap="small")
                 with c_form_g:
-                    with st.form(key=f"form_edit_g_{idx}", clear_on_submit=False, border=False):
+                    with st.form(key=f"form_edit_g_{g_id}", clear_on_submit=False, border=False):
                         f_col1, f_col2 = st.columns([4, 1], gap="small")
                         with f_col1:
                             prompt_g_val = st.text_input(
                                 "תיאור לעריכת מטרה:", 
                                 placeholder="למשל: התייחס למובנות הדיבור", 
-                                key=f"edit_g_p_{idx}", 
+                                key=f"edit_g_p_{g_id}", 
                                 label_visibility="collapsed"
                             )
                         with f_col2:
@@ -828,9 +861,9 @@ if st.session_state['goals_list']:
                                     )
                                     push_to_history()
                                     goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
-                                    goal['ver'] = g_ver + 1
-                                    st.session_state[f"show_edit_g_{idx}"] = False
-                                    st.session_state[f"edit_g_p_{idx}"] = ""
+                                    st.session_state[f"show_edit_g_{g_id}"] = False
+                                    st.session_state[f"edit_g_p_{g_id}"] = ""
+                                    st.session_state['state_rev'] = rev + 1
                                     st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                     st.rerun()
                                 except Exception as e:
@@ -842,7 +875,7 @@ if st.session_state['goals_list']:
             t_col_left, t_col_right = st.columns([6, 4])
             with t_col_left:
                 for o_idx, obj_item in enumerate(goal.get('objectives_list', [])):
-                    o_ver = obj_item.get('ver', 0)
+                    o_id = obj_item['id']
                     col_obj_text, col_obj_tf = st.columns([4.2, 1.8], gap="small")
                     with col_obj_text:
                         st.markdown(f"**יעד {o_idx+1}:**")
@@ -851,15 +884,15 @@ if st.session_state['goals_list']:
                             value=obj_item.get('text', ''), 
                             height=85, 
                             label_visibility="collapsed", 
-                            key=f"obj_txt_{idx}_{o_idx}_{o_ver}"
+                            key=f"obj_txt_{o_id}_{rev}"
                         )
 
-                        # שורת כפתורי פעולה ליעד
+                        # שורת כפתורי פעולה ליעד (מקושרים למזהה היעד בלבד)
                         c_b1, c_b2, c_b3 = st.columns([1.1, 1.35, 1.0], gap="small")
 
                         with c_b1:
                             st.markdown('<span class="marker-regen"></span>', unsafe_allow_html=True)
-                            if st.button("נסח מחדש", key=f"btn_reg_obj_{idx}_{o_idx}"):
+                            if st.button("נסח מחדש", key=f"btn_reg_obj_{o_id}"):
                                 with st.spinner("מנסח יעד ספציפי וממוקד..."):
                                     try:
                                         client = genai.Client(api_key=api_key)
@@ -885,7 +918,7 @@ if st.session_state['goals_list']:
                                         )
                                         push_to_history()
                                         obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
-                                        obj_item['ver'] = o_ver + 1
+                                        st.session_state['state_rev'] = rev + 1
                                         st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                         st.rerun()
                                     except Exception as e:
@@ -893,27 +926,29 @@ if st.session_state['goals_list']:
 
                         with c_b2:
                             st.markdown('<span class="marker-edit"></span>', unsafe_allow_html=True)
-                            if st.button("ערוך לפי תיאור", key=f"btn_toggle_pr_obj_{idx}_{o_idx}"):
-                                st.session_state[f"show_pr_obj_{idx}_{o_idx}"] = not st.session_state.get(f"show_pr_obj_{idx}_{o_idx}", False)
+                            if st.button("ערוך לפי תיאור", key=f"btn_toggle_pr_obj_{o_id}"):
+                                st.session_state[f"show_pr_obj_{o_id}"] = not st.session_state.get(f"show_pr_obj_{o_id}", False)
                                 st.rerun()
 
                         with c_b3:
                             st.markdown('<span class="marker-del"></span>', unsafe_allow_html=True)
-                            if st.button("מחק יעד", key=f"del_obj_{idx}_{o_idx}"):
+                            if st.button("מחק יעד", key=f"del_obj_{o_id}"):
                                 push_to_history()
-                                goal['objectives_list'].pop(o_idx)
+                                # מחיקה מוחלטת ומדויקת לפי מזהה היעד (ללא תלות באינדקס)
+                                goal['objectives_list'] = [o for o in goal['objectives_list'] if o.get('id') != o_id]
+                                st.session_state['state_rev'] = rev + 1
                                 st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                 st.rerun()
 
                         # חלון עריכת יעד שנפתח רק בלחיצה
-                        if st.session_state.get(f"show_pr_obj_{idx}_{o_idx}", False):
-                            with st.form(key=f"form_pr_obj_{idx}_{o_idx}", clear_on_submit=False, border=False):
+                        if st.session_state.get(f"show_pr_obj_{o_id}", False):
+                            with st.form(key=f"form_pr_obj_{o_id}", clear_on_submit=False, border=False):
                                 f_col1, f_col2 = st.columns([4, 1], gap="small")
                                 with f_col1:
                                     prompt_obj_val = st.text_input(
                                         "ערוך יעד לפי תיאור:", 
                                         placeholder="למשל: נסח בצורה פשוטה יותר", 
-                                        key=f"pr_obj_{idx}_{o_idx}", 
+                                        key=f"pr_obj_{o_id}", 
                                         label_visibility="collapsed"
                                     )
                                 with f_col2:
@@ -930,9 +965,9 @@ if st.session_state['goals_list']:
                                             )
                                             push_to_history()
                                             obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
-                                            obj_item['ver'] = o_ver + 1
-                                            st.session_state[f"show_pr_obj_{idx}_{o_idx}"] = False
-                                            st.session_state[f"pr_obj_{idx}_{o_idx}"] = ""
+                                            st.session_state[f"show_pr_obj_{o_id}"] = False
+                                            st.session_state[f"pr_obj_{o_id}"] = ""
+                                            st.session_state['state_rev'] = rev + 1
                                             st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                             st.rerun()
                                         except Exception as e:
@@ -943,7 +978,7 @@ if st.session_state['goals_list']:
                         obj_item['timeframe'] = st.text_input(
                             f"פרק זמן ליעד {o_idx+1}", 
                             value=obj_item.get('timeframe', 'עד סוף השנה'), 
-                            key=f"obj_T_{idx}_{o_idx}_{o_ver}", 
+                            key=f"obj_tf_{o_id}_{rev}", 
                             label_visibility="collapsed"
                         )
 
@@ -954,7 +989,7 @@ if st.session_state['goals_list']:
                 c_add_btn_box, _ = st.columns([5, 5], gap="small")
                 with c_add_btn_box:
                     st.markdown('<span class="marker-plus"></span>', unsafe_allow_html=True)
-                    if st.button("הוסף יעד למטרה זו", key=f"do_add_obj_auto_{idx}"):
+                    if st.button("הוסף יעד למטרה זו", key=f"do_add_obj_auto_{g_id}"):
                         with st.spinner("מנסח יעד תפקודי חדש וממוקד..."):
                             try:
                                 client = genai.Client(api_key=api_key)
@@ -971,23 +1006,24 @@ if st.session_state['goals_list']:
                                 )
                                 push_to_history()
                                 goal.setdefault('objectives_list', []).append({
+                                    "id": f"o_{uuid.uuid4().hex[:8]}",
                                     "text": res.text.strip().replace('"', '').replace("'", ""), 
-                                    "timeframe": "עד סוף השנה",
-                                    "ver": 0
+                                    "timeframe": "עד סוף השנה"
                                 })
+                                st.session_state['state_rev'] = rev + 1
                                 st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"שגיאה בהוספת יעד (עומס זמני בשרתי המודל): {e}. אנא נסי שוב.")
 
                 # שורת הוספת יעד על פי תיאור עם כפתור שלח
-                with st.form(key=f"form_add_obj_custom_{idx}", clear_on_submit=False, border=False):
+                with st.form(key=f"form_add_obj_custom_{g_id}", clear_on_submit=False, border=False):
                     f_col1, f_col2 = st.columns([5, 1], gap="small")
                     with f_col1:
                         add_obj_val = st.text_input(
                             "הוסף יעד על פי תיאור:", 
                             placeholder="הוסף יעד על פי תיאור. למשל: הוסף יעד בסיסי יותר", 
-                            key=f"add_obj_p_{idx}", 
+                            key=f"add_obj_p_{g_id}", 
                             label_visibility="collapsed"
                         )
                     with f_col2:
@@ -1011,11 +1047,12 @@ if st.session_state['goals_list']:
                                 )
                                 push_to_history()
                                 goal.setdefault('objectives_list', []).append({
+                                    "id": f"o_{uuid.uuid4().hex[:8]}",
                                     "text": res.text.strip().replace('"', '').replace("'", ""), 
-                                    "timeframe": "עד סוף השנה",
-                                    "ver": 0
+                                    "timeframe": "עד סוף השנה"
                                 })
-                                st.session_state[f"add_obj_p_{idx}"] = ""
+                                st.session_state[f"add_obj_p_{g_id}"] = ""
+                                st.session_state['state_rev'] = rev + 1
                                 st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                 st.rerun()
                             except Exception as e:
@@ -1028,24 +1065,21 @@ if st.session_state['goals_list']:
                     "דרכי הוראה ואמצעים:", 
                     value=goal.get('teaching_methods', ''), 
                     height=1000, 
-                    key=f"teach_{idx}_{g_ver}", 
+                    key=f"teach_{g_id}_{rev}", 
                     label_visibility="collapsed"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
-    # מעקב אחר עריכות ידניות בטפסים ובשדות טקסט
+    # מעקב מדויק אחר עריכות ידניות בטפסים ובשדות טקסט
     current_snap = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
-    if 'last_known_state' in st.session_state:
-        if current_snap != st.session_state['last_known_state']:
-            if 'history_stack' not in st.session_state:
-                st.session_state['history_stack'] = []
-            if not st.session_state['history_stack'] or st.session_state['history_stack'][-1] != st.session_state['last_known_state']:
-                st.session_state['history_stack'].append(st.session_state['last_known_state'])
-                if len(st.session_state['history_stack']) > 30:
-                    st.session_state['history_stack'].pop(0)
-            st.session_state['last_known_state'] = current_snap
-            st.rerun()
-    else:
+    if 'last_known_state' not in st.session_state:
+        st.session_state['last_known_state'] = current_snap
+    elif current_snap != st.session_state['last_known_state']:
+        if 'history_stack' not in st.session_state:
+            st.session_state['history_stack'] = []
+        st.session_state['history_stack'].append(st.session_state['last_known_state'])
+        if len(st.session_state['history_stack']) > 30:
+            st.session_state['history_stack'].pop(0)
         st.session_state['last_known_state'] = current_snap
 
     # הוספת מטרה נוספת
@@ -1100,11 +1134,12 @@ if st.session_state['goals_list']:
                     new_item = safe_parse_json(res.text)
                     if isinstance(new_item, list) and len(new_item) > 0:
                         new_item = new_item[0]
-                    new_item['ver'] = 0
+                    new_item['id'] = f"g_{uuid.uuid4().hex[:8]}"
                     for obj in new_item.get('objectives_list', []):
-                        obj['ver'] = 0
+                        obj['id'] = f"o_{uuid.uuid4().hex[:8]}"
                     push_to_history()
                     st.session_state['goals_list'].append(new_item)
+                    st.session_state['state_rev'] = rev + 1
                     st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                     st.rerun()
                 except Exception as e:
