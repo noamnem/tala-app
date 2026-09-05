@@ -45,6 +45,11 @@ st.markdown("""
         border-top: 1px solid #e2e8f0 !important;
     }
 
+    /* הסתרת סרגל הכלים העליון של Streamlit (GitHub, Share, 3 נקודות) */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+
     /* צמצום מרווחי אלמנטים פנימיים בתוך חלונות המטרות */
     [data-testid="stExpander"] div[data-testid="stElementContainer"] {
         margin-bottom: 0.25rem !important;
@@ -174,7 +179,7 @@ st.markdown("""
     /* כפתור סטטוס דרייב תכלת */
     div[data-testid="stPopover"] {
         position: fixed !important;
-        top: 12px !important;
+        top: 15px !important;
         left: 20px !important;
         right: auto !important;
         width: auto !important;
@@ -204,7 +209,7 @@ st.markdown("""
     /* כפתור בטל שינוי בשורה העליונה הקפואה בצד ימין */
     div.undo-top-bar {
         position: fixed !important;
-        top: 12px !important;
+        top: 15px !important;
         right: 20px !important;
         left: auto !important;
         width: auto !important;
@@ -513,6 +518,21 @@ def push_to_history():
 with st.spinner("מסנכרן דוגמאות מתיקיית הדרייב..."):
     examples_context = sync_and_load_drive_examples()
 
+# כפתור "בטל שינוי" בשורה העליונה הקפואה בצד ימין
+if st.session_state.get('history_stack'):
+    st.markdown('<div class="undo-top-bar">', unsafe_allow_html=True)
+    if st.button("בטל שינוי", key="btn_global_undo"):
+        popped = st.session_state['history_stack'].pop()
+        restored = json.loads(popped)
+        for g in restored:
+            g['ver'] = g.get('ver', 0) + 1
+            for o in g.get('objectives_list', []):
+                o['ver'] = o.get('ver', 0) + 1
+        st.session_state['goals_list'] = restored
+        st.session_state['last_known_state'] = json.dumps(restored, ensure_ascii=False)
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # כפתור סטטוס Google Drive בצד שמאל בשורה העליונה הקפואה
 with st.popover("מאגר דרייב"):
     st.markdown("**סטטוס חיבור ל-Google Drive:**")
@@ -532,21 +552,6 @@ with st.popover("מאגר דרייב"):
     if st.button("רענן מאגר דרייב", key="refresh_drive_btn"):
         st.cache_data.clear()
         st.rerun()
-
-# כפתור "בטל שינוי" בשורה העליונה הקפואה בצד ימין
-if st.session_state.get('history_stack'):
-    st.markdown('<div class="undo-top-bar">', unsafe_allow_html=True)
-    if st.button("בטל שינוי", key="btn_global_undo"):
-        popped = st.session_state['history_stack'].pop()
-        restored = json.loads(popped)
-        for g in restored:
-            g['ver'] = g.get('ver', 0) + 1
-            for o in g.get('objectives_list', []):
-                o['ver'] = o.get('ver', 0) + 1
-        st.session_state['goals_list'] = restored
-        st.session_state['last_known_state'] = json.dumps(restored, ensure_ascii=False)
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # כותרת ראשית – טקסט שחור, בולד וגדול (לחיצה עליה מרעננת ומאפסת למסך הבית)
 st.markdown('<a href="./" target="_self" class="title-link"><h1 class="main-title">ממשק חכם לניסוח תל"א</h1></a>', unsafe_allow_html=True)
