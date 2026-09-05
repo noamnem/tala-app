@@ -23,18 +23,31 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap');
 
-    /* החלת גופן אלף, גודל ברור ומרווח שורות מהודק ואלגנטי */
+    /* החלת גופן אלף, גודל ברור ומרווח שורות מהודק וקומפקטי */
     html, body, .stMarkdown, p, h1, h2, h3, h4, label, input, textarea, button, select, [class*="css"], details, summary {
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
         text-align: right !important;
         font-size: 1.12rem !important;
-        line-height: 1.35 !important;
+        line-height: 1.26 !important;
     }
 
     p {
         margin-top: 0 !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* צמצום מרווחים סביב קווי הפרדה */
+    hr {
+        margin-top: 0.35rem !important;
         margin-bottom: 0.35rem !important;
+        border: none !important;
+        border-top: 1px solid #e2e8f0 !important;
+    }
+
+    /* צמצום מרווחי אלמנטים פנימיים בתוך חלונות המטרות */
+    [data-testid="stExpander"] div[data-testid="stElementContainer"] {
+        margin-bottom: 0.25rem !important;
     }
 
     h1, .main-title {
@@ -47,8 +60,8 @@ st.markdown("""
         font-size: 1.55rem !important;
         font-weight: 700 !important;
         line-height: 1.25 !important;
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
     }
 
     /* כותרת ראשית – טקסט שחור, נקי ומודגש ללא מאפייני כפתור כלל */
@@ -102,17 +115,19 @@ st.markdown("""
         display: none !important;
     }
 
-    /* מלבן חיווי ירוק בהיר יחיד, צר, ללא בולד */
+    /* מלבן חיווי ירוק מרווח ופרופורציונלי לגודל הפונט */
     div[data-testid="stAlert"] {
         background-color: #e8f5e9 !important;
         border: none !important;
-        border-radius: 8px !important;
+        border-radius: 9px !important;
         width: fit-content !important;
         min-width: unset !important;
         max-width: fit-content !important;
-        padding: 5px 15px !important;
-        margin: 6px 0 !important;
+        padding: 9px 22px !important;
+        margin: 8px 0 !important;
         box-shadow: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
     }
     div[data-testid="stAlert"] > div {
         background-color: transparent !important;
@@ -125,8 +140,8 @@ st.markdown("""
     div[data-testid="stAlert"] * {
         color: #1b5e20 !important;
         font-weight: 400 !important;
-        font-size: 1.05rem !important;
-        line-height: 1.3 !important;
+        font-size: 1.1rem !important;
+        line-height: 1.4 !important;
         background: transparent !important;
     }
 
@@ -866,7 +881,7 @@ if st.session_state['goals_list']:
                                 })
                                 st.rerun()
                             except Exception as e:
-                                st.error(f"שגיאה בהוספת יעד: {e}. אנא נסי שוב.")
+                                st.error(f"שגיאה בהוספת יעד (עומס זמני בשרתי המודל): {e}. אנא נסי שוב.")
 
                 # שורת הוספת יעד על פי תיאור עם כפתור שלח
                 with st.form(key=f"form_add_obj_custom_{idx}", clear_on_submit=False, border=False):
