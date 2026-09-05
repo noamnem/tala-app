@@ -115,7 +115,7 @@ st.markdown("""
         display: none !important;
     }
 
-    /* מלבן חיווי ירוק מרווח ופרופורציונלי לגודל הפונט */
+    /* מלבן חיווי ירוק ממורכז לחלוטין לאורך ולרוחב */
     div[data-testid="stAlert"] {
         background-color: #e8f5e9 !important;
         border: none !important;
@@ -123,17 +123,24 @@ st.markdown("""
         width: fit-content !important;
         min-width: unset !important;
         max-width: fit-content !important;
-        padding: 9px 22px !important;
+        padding: 9px 24px !important;
         margin: 8px 0 !important;
         box-shadow: none !important;
         display: inline-flex !important;
         align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
     }
     div[data-testid="stAlert"] > div {
         background-color: transparent !important;
         border: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        text-align: center !important;
     }
     div[data-testid="stAlert"] p,
     div[data-testid="stAlert"] span,
@@ -141,7 +148,10 @@ st.markdown("""
         color: #1b5e20 !important;
         font-weight: 400 !important;
         font-size: 1.1rem !important;
-        line-height: 1.4 !important;
+        line-height: 1.35 !important;
+        text-align: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
         background: transparent !important;
     }
 
