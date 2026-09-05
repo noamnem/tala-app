@@ -23,56 +23,65 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap');
 
-    /* החלת גופן אלף וגודל מאוזן ומקצועי לאתר חי */
+    /* החלת גופן אלף וגודל ברור ומרווח לאתר חי */
     html, body, .stMarkdown, p, h1, h2, h3, h4, label, input, textarea, button, select, [class*="css"], details, summary {
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
         text-align: right !important;
-        font-size: 1.03rem !important;
+        font-size: 1.12rem !important;
     }
 
     h1, .main-title {
-        font-size: 2.1rem !important;
+        font-size: 2.3rem !important;
         font-weight: 700 !important;
     }
 
     h2, h3, .stSubheader {
-        font-size: 1.45rem !important;
+        font-size: 1.6rem !important;
         font-weight: 700 !important;
     }
 
-    /* כותרת ראשית ככפתור חזרה לדף הבית */
+    /* כותרת ראשית כטקסט שחור, נקי וגדול שהוא גם כפתור חזרה לדף הבית */
+    div.title-btn-container,
+    div.title-btn-container div,
+    div.title-btn-container [data-testid="stButton"],
+    div.title-btn-container button,
     div.title-btn-container .stButton > button {
         background: transparent !important;
+        background-color: transparent !important;
         border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
-        box-shadow: none !important;
-        font-size: 2.1rem !important;
-        font-weight: 700 !important;
-        color: #1a1a1a !important;
+        color: #111111 !important;
+        cursor: pointer !important;
         text-align: right !important;
         direction: rtl !important;
-        cursor: pointer !important;
-        display: inline-block !important;
         width: auto !important;
     }
-    div.title-btn-container .stButton > button:hover {
-        color: #0288D1 !important;
+    div.title-btn-container button:hover,
+    div.title-btn-container button:active,
+    div.title-btn-container button:focus {
         background: transparent !important;
+        background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
+        color: #111111 !important;
     }
-    div.title-btn-container .stButton > button p {
-        font-size: 2.1rem !important;
+    div.title-btn-container button p,
+    div.title-btn-container button span {
+        font-size: 2.3rem !important;
         font-weight: 700 !important;
+        color: #111111 !important;
+        line-height: 1.25 !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
     /* כותרות חלונות המטרות */
     [data-testid="stExpander"] details summary p {
-        font-size: 1.08rem !important;
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
         color: #1a1a1a !important;
     }
@@ -81,8 +90,8 @@ st.markdown("""
     [data-testid="stExpander"] details summary p::before {
         content: "";
         display: inline-block;
-        width: 17px;
-        height: 17px;
+        width: 18px;
+        height: 18px;
         margin-left: 8px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23111111'%3E%3Cpath d='M6 3c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1s1-.45 1-1v-6h11.5c.4 0 .75-.24.9-.6.15-.37.07-.79-.2-1.07L16.5 10l2.7-3.33c.27-.28.35-.7.2-1.07-.15-.36-.5-.6-.9-.6H7V4c0-.55-.45-1-1-1z'/%3E%3C/svg%3E");
@@ -105,7 +114,7 @@ st.markdown("""
         width: fit-content !important;
         min-width: unset !important;
         max-width: fit-content !important;
-        padding: 5px 14px !important;
+        padding: 6px 16px !important;
         margin: 6px 0 !important;
         box-shadow: none !important;
     }
@@ -120,7 +129,7 @@ st.markdown("""
     div[data-testid="stAlert"] * {
         color: #1b5e20 !important;
         font-weight: 400 !important;
-        font-size: 1.0rem !important;
+        font-size: 1.08rem !important;
         background: transparent !important;
     }
 
@@ -156,8 +165,8 @@ st.markdown("""
         color: #0288D1 !important;
         border: 1px solid #bae6fd !important;
         border-radius: 20px !important;
-        padding: 5px 14px !important;
-        font-size: 0.9rem !important;
+        padding: 6px 16px !important;
+        font-size: 0.98rem !important;
         font-weight: bold !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
     }
@@ -178,8 +187,8 @@ st.markdown("""
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
         text-align: center !important;
-        font-size: 0.98rem !important;
-        padding: 6px 6px !important;
+        font-size: 1.05rem !important;
+        padding: 7px 8px !important;
         white-space: nowrap !important;
         background-color: #f0f9ff !important;
         border: 1px solid #7dd3fc !important;
@@ -196,8 +205,8 @@ st.markdown("""
         background-color: #0288D1 !important;
         color: white !important;
         border: none !important;
-        font-size: 1.15rem !important;
-        padding: 10px !important;
+        font-size: 1.22rem !important;
+        padding: 11px !important;
     }
     .main-btn>button:hover {
         background-color: #0277BD !important;
@@ -231,8 +240,8 @@ st.markdown("""
     div.stElementContainer:has(.marker-regen) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 15px;
-        height: 15px;
+        width: 16px;
+        height: 16px;
         margin-left: 5px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z'/%3E%3C/svg%3E");
@@ -245,8 +254,8 @@ st.markdown("""
     div.stElementContainer:has(.marker-edit) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 15px;
-        height: 15px;
+        width: 16px;
+        height: 16px;
         margin-left: 5px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E");
@@ -259,8 +268,8 @@ st.markdown("""
     div.stElementContainer:has(.marker-del) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 15px;
-        height: 15px;
+        width: 16px;
+        height: 16px;
         margin-left: 5px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E");
@@ -273,8 +282,8 @@ st.markdown("""
     div.stElementContainer:has(.marker-plus) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 16px;
-        height: 16px;
+        width: 17px;
+        height: 17px;
         margin-left: 6px;
         vertical-align: -2px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230369a1'%3E%3Cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3E%3C/svg%3E");
@@ -287,9 +296,9 @@ st.markdown("""
         background-color: #0288D1 !important;
         color: #ffffff !important;
         border: none !important;
-        font-size: 1.15rem !important;
+        font-size: 1.22rem !important;
         font-weight: 700 !important;
-        padding: 10px !important;
+        padding: 11px !important;
     }
     .download-btn>button:hover {
         background-color: #0277BD !important;
@@ -299,8 +308,8 @@ st.markdown("""
     div.stElementContainer:has(.marker-download) + div.stElementContainer button p::before {
         content: "";
         display: inline-block;
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         margin-left: 8px;
         vertical-align: -3px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z'/%3E%3C/svg%3E");
@@ -321,14 +330,14 @@ st.markdown("""
     div.teach-box div[data-baseweb="textarea"],
     div.teach-box textarea,
     textarea[aria-label*="דרכי הוראה"] {
-        height: 970px !important;
-        min-height: 970px !important;
-        max-height: 970px !important;
-        padding-top: 340px !important;
+        height: 1000px !important;
+        min-height: 1000px !important;
+        max-height: 1000px !important;
+        padding-top: 350px !important;
         padding-bottom: 40px !important;
         line-height: 2 !important;
         box-sizing: border-box !important;
-        font-size: 1.03rem !important;
+        font-size: 1.1rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -453,7 +462,7 @@ with st.popover("מאגר דרייב"):
         st.cache_data.clear()
         st.rerun()
 
-# כותרת ראשית אינטראקטיבית – לחיצה עליה מאפסת את העמוד ומחזירה למסך הבית
+# כותרת ראשית – טקסט שחור, בולד וגדול, שלחיצה עליו מאפסת ומחזירה למסך הבית
 st.markdown('<div class="title-btn-container">', unsafe_allow_html=True)
 if st.button("ממשק חכם לניסוח תל\"א", key="btn_home_reset"):
     st.session_state['goals_list'] = []
@@ -512,7 +521,7 @@ if uploaded_file is not None:
     except Exception as err:
         st.error("⚠️ לא ניתן לקרוא את הקובץ. אנא ודאי שמסמך ה-Word סגור במחשבך ולא נעול, ונסי להעלות שוב.")
 else:
-    input_text = st.text_area("או הדביקי כאן את הטקסט:", height=120, placeholder="הדביקי כאן מוקדי כוח וחיזוק...")
+    input_text = st.text_area("או הדביקי כאן את הטקסט:", height=140, placeholder="הדביקי כאן מוקדי כוח וחיזוק...")
 
 st.markdown('<div class="main-btn">', unsafe_allow_html=True)
 if st.button("הפק מטרות ויעדים"):
@@ -634,7 +643,7 @@ if st.session_state['goals_list']:
     active_class_context = get_filtered_examples(examples_context, current_class)
 
     st.markdown("---")
-    st.subheader(f"2. עריכה, דיוק והתאמת המטרות (כיתת {current_class})")
+    st.subheader("2. עריכה, דיוק והתאמת המטרות")
 
     for idx, goal in enumerate(st.session_state['goals_list']):
         g_ver = goal.get('ver', 0)
@@ -747,7 +756,7 @@ if st.session_state['goals_list']:
                         obj_item['text'] = st.text_area(
                             f"טקסט יעד {o_idx+1}", 
                             value=obj_item.get('text', ''), 
-                            height=70, 
+                            height=85, 
                             label_visibility="collapsed", 
                             key=f"obj_txt_{idx}_{o_idx}_{o_ver}"
                         )
@@ -867,7 +876,7 @@ if st.session_state['goals_list']:
                                 })
                                 st.rerun()
                             except Exception as e:
-                                st.error(f"שגיאה בהוספת יעד (עומס זמני בשרתי המודל): {e}. אנא נסי שוב.")
+                                st.error(f"שגיאה בהוספת יעד: {e}. אנא נסי שוב.")
 
                 # שורת הוספת יעד על פי תיאור עם כפתור שלח
                 with st.form(key=f"form_add_obj_custom_{idx}", clear_on_submit=False, border=False):
@@ -914,7 +923,7 @@ if st.session_state['goals_list']:
                 goal['teaching_methods'] = st.text_area(
                     "דרכי הוראה ואמצעים:", 
                     value=goal.get('teaching_methods', ''), 
-                    height=970, 
+                    height=1000, 
                     key=f"teach_{idx}_{g_ver}", 
                     label_visibility="collapsed"
                 )
