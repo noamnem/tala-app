@@ -402,9 +402,10 @@ st.caption("מערכת לגזירת מטרות על ויעדים אופרטיב�
 
 with st.sidebar:
     st.header("הגדרות מערכת")
+    default_key = st.secrets.get("GEMINI_API_KEY", "")
     api_key = st.text_input(
         "מפתח API:", 
-        value="AQ.Ab8RN6KO-aLO8c_IGTJZnUl0ju67TTDDblmIPxEQr4LeH0KGAA", 
+        value=default_key, 
         type="password"
     )
 
