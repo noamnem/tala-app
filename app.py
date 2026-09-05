@@ -41,42 +41,27 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* כותרת ראשית כטקסט שחור, נקי וגדול שהוא גם כפתור חזרה לדף הבית */
-    div.title-btn-container,
-    div.title-btn-container div,
-    div.title-btn-container [data-testid="stButton"],
-    div.title-btn-container button,
-    div.title-btn-container .stButton > button {
+    /* כותרת ראשית – טקסט שחור, נקי ומודגש ללא מאפייני כפתור כלל */
+    a.title-link, a.title-link:hover, a.title-link:visited, a.title-link:active, a.title-link:focus {
+        text-decoration: none !important;
+        color: #111111 !important;
         background: transparent !important;
-        background-color: transparent !important;
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        color: #111111 !important;
+        display: inline-block !important;
         cursor: pointer !important;
-        text-align: right !important;
-        direction: rtl !important;
-        width: auto !important;
     }
-    div.title-btn-container button:hover,
-    div.title-btn-container button:active,
-    div.title-btn-container button:focus {
-        background: transparent !important;
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
+    a.title-link h1, a.title-link .main-title {
         color: #111111 !important;
-    }
-    div.title-btn-container button p,
-    div.title-btn-container button span {
-        font-size: 2.3rem !important;
         font-weight: 700 !important;
-        color: #111111 !important;
+        font-size: 2.3rem !important;
         line-height: 1.25 !important;
         margin: 0 !important;
         padding: 0 !important;
+        cursor: pointer !important;
+        background: transparent !important;
+        border: none !important;
     }
 
     /* כותרות חלונות המטרות */
@@ -462,15 +447,8 @@ with st.popover("מאגר דרייב"):
         st.cache_data.clear()
         st.rerun()
 
-# כותרת ראשית – טקסט שחור, בולד וגדול, שלחיצה עליו מאפסת ומחזירה למסך הבית
-st.markdown('<div class="title-btn-container">', unsafe_allow_html=True)
-if st.button("ממשק חכם לניסוח תל\"א", key="btn_home_reset"):
-    st.session_state['goals_list'] = []
-    st.session_state['raw_uploaded_table'] = []
-    st.session_state.pop('just_generated', None)
-    st.session_state.pop('current_input_text', None)
-    st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
+# כותרת ראשית – טקסט שחור, בולד וגדול (לחיצה עליה מרעננת ומאפסת למסך הבית)
+st.markdown('<a href="./" target="_self" class="title-link"><h1 class="main-title">ממשק חכם לניסוח תל"א</h1></a>', unsafe_allow_html=True)
 st.caption("מערכת לגזירת מטרות על ויעדים אופרטיביים על בסיס תיאור הילד/ה")
 
 with st.sidebar:
