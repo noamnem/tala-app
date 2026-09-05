@@ -23,22 +23,32 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap');
 
-    /* החלת גופן אלף וגודל ברור ומרווח לאתר חי */
+    /* החלת גופן אלף, גודל ברור ומרווח שורות מהודק ואלגנטי */
     html, body, .stMarkdown, p, h1, h2, h3, h4, label, input, textarea, button, select, [class*="css"], details, summary {
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
         text-align: right !important;
         font-size: 1.12rem !important;
+        line-height: 1.35 !important;
+    }
+
+    p {
+        margin-top: 0 !important;
+        margin-bottom: 0.35rem !important;
     }
 
     h1, .main-title {
         font-size: 2.3rem !important;
         font-weight: 700 !important;
+        line-height: 1.2 !important;
     }
 
     h2, h3, .stSubheader {
-        font-size: 1.6rem !important;
+        font-size: 1.55rem !important;
         font-weight: 700 !important;
+        line-height: 1.25 !important;
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
     }
 
     /* כותרת ראשית – טקסט שחור, נקי ומודגש ללא מאפייני כפתור כלל */
@@ -56,7 +66,7 @@ st.markdown("""
         color: #111111 !important;
         font-weight: 700 !important;
         font-size: 2.3rem !important;
-        line-height: 1.25 !important;
+        line-height: 1.2 !important;
         margin: 0 !important;
         padding: 0 !important;
         cursor: pointer !important;
@@ -66,9 +76,10 @@ st.markdown("""
 
     /* כותרות חלונות המטרות */
     [data-testid="stExpander"] details summary p {
-        font-size: 1.2rem !important;
+        font-size: 1.18rem !important;
         font-weight: 700 !important;
         color: #1a1a1a !important;
+        line-height: 1.3 !important;
     }
 
     /* דגל יחיד מימין לכותרת המטרה */
@@ -99,7 +110,7 @@ st.markdown("""
         width: fit-content !important;
         min-width: unset !important;
         max-width: fit-content !important;
-        padding: 6px 16px !important;
+        padding: 5px 15px !important;
         margin: 6px 0 !important;
         box-shadow: none !important;
     }
@@ -114,7 +125,8 @@ st.markdown("""
     div[data-testid="stAlert"] * {
         color: #1b5e20 !important;
         font-weight: 400 !important;
-        font-size: 1.08rem !important;
+        font-size: 1.05rem !important;
+        line-height: 1.3 !important;
         background: transparent !important;
     }
 
@@ -150,8 +162,8 @@ st.markdown("""
         color: #0288D1 !important;
         border: 1px solid #bae6fd !important;
         border-radius: 20px !important;
-        padding: 6px 16px !important;
-        font-size: 0.98rem !important;
+        padding: 5px 15px !important;
+        font-size: 0.96rem !important;
         font-weight: bold !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
     }
@@ -172,8 +184,8 @@ st.markdown("""
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
         text-align: center !important;
-        font-size: 1.05rem !important;
-        padding: 7px 8px !important;
+        font-size: 1.02rem !important;
+        padding: 6px 8px !important;
         white-space: nowrap !important;
         background-color: #f0f9ff !important;
         border: 1px solid #7dd3fc !important;
@@ -190,8 +202,8 @@ st.markdown("""
         background-color: #0288D1 !important;
         color: white !important;
         border: none !important;
-        font-size: 1.22rem !important;
-        padding: 11px !important;
+        font-size: 1.2rem !important;
+        padding: 10px !important;
     }
     .main-btn>button:hover {
         background-color: #0277BD !important;
@@ -281,9 +293,9 @@ st.markdown("""
         background-color: #0288D1 !important;
         color: #ffffff !important;
         border: none !important;
-        font-size: 1.22rem !important;
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
-        padding: 11px !important;
+        padding: 10px !important;
     }
     .download-btn>button:hover {
         background-color: #0277BD !important;
