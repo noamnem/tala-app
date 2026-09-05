@@ -41,6 +41,35 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
+    /* כותרת ראשית ככפתור חזרה לדף הבית */
+    div.title-btn-container .stButton > button {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        font-size: 2.1rem !important;
+        font-weight: 700 !important;
+        color: #1a1a1a !important;
+        text-align: right !important;
+        direction: rtl !important;
+        cursor: pointer !important;
+        display: inline-block !important;
+        width: auto !important;
+    }
+    div.title-btn-container .stButton > button:hover {
+        color: #0288D1 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    div.title-btn-container .stButton > button p {
+        font-size: 2.1rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     /* כותרות חלונות המטרות */
     [data-testid="stExpander"] details summary p {
         font-size: 1.08rem !important;
@@ -346,6 +375,28 @@ def sync_and_load_drive_examples():
                         pass
     return "\n\n".join(combined_examples)
 
+def get_filtered_examples(full_context, target_class):
+    """מסנן ומבודד מתוך מאגר הדוגמאות רק את הדוגמאות השייכות לכיתה המבוקשת (צעירים או בוגרים)"""
+    if not full_context:
+        return ""
+    chunks = re.split(r'(?=(?:^|\n)\s*דוגמ[הא]\s*\d+)', full_context)
+    filtered = []
+    for chunk in chunks:
+        lines = chunk.strip().splitlines()
+        if not lines:
+            continue
+        first_line = lines[0]
+        if "צעירים" in first_line or "בוגרים" in first_line:
+            if target_class in first_line:
+                filtered.append(chunk.strip())
+        else:
+            if not chunk.strip().startswith("=== מאגר דוגמאות"):
+                filtered.append(chunk.strip())
+    
+    if filtered:
+        return "\n\n".join(filtered)
+    return full_context
+
 def safe_parse_json(text_content):
     t = text_content.strip()
     if t.startswith("```"):
@@ -389,7 +440,12 @@ with st.popover("מאגר דרייב"):
         num_docs = examples_context.count("=== מאגר דוגמאות מתוך")
         found_headers = re.findall(r'(?:^|\n|\b)דוגמ[הא]\s*(?:מס\'|מספר)?\s*(?:\d+|[א-ת](?:[\'״"][א-ת])?)\b', examples_context)
         num_examples = len(found_headers) if found_headers else num_docs
-        st.success(f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קבצים המכילים {num_examples} דוגמאות ללמידת המודל.")
+        num_young = len(re.findall(r'דוגמ[הא].*?צעירים', examples_context))
+        num_old = len(re.findall(r'דוגמ[הא].*?בוגרים', examples_context))
+        status_msg = f"מאגר הדוגמאות מחובר ומסונכרן!\n\nנטענו {num_docs} קבצים המכילים {num_examples} דוגמאות ללמידת המודל."
+        if num_young or num_old:
+            status_msg += f"\n\n(חלוקה: {num_young} דוגמאות צעירים, {num_old} דוגמאות בוגרים)"
+        st.success(status_msg)
     else:
         st.warning("לא אותרו קבצים בתיקייה (וודאי שהשיתוף פתוח לצפייה לכולם).")
 
@@ -397,7 +453,15 @@ with st.popover("מאגר דרייב"):
         st.cache_data.clear()
         st.rerun()
 
-st.title("ממשק חכם לניסוח תל\"א")
+# כותרת ראשית אינטראקטיבית – לחיצה עליה מאפסת את העמוד ומחזירה למסך הבית
+st.markdown('<div class="title-btn-container">', unsafe_allow_html=True)
+if st.button("ממשק חכם לניסוח תל\"א", key="btn_home_reset"):
+    st.session_state['goals_list'] = []
+    st.session_state['raw_uploaded_table'] = []
+    st.session_state.pop('just_generated', None)
+    st.session_state.pop('current_input_text', None)
+    st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
 st.caption("מערכת לגזירת מטרות על ויעדים אופרטיביים על בסיס תיאור הילד/ה")
 
 with st.sidebar:
@@ -414,10 +478,11 @@ if 'goals_list' not in st.session_state:
 if 'raw_uploaded_table' not in st.session_state:
     st.session_state['raw_uploaded_table'] = []
 
-# טופס ראשי
-col1, col2 = st.columns([1, 3])
+# טופס ראשי עם בחירת מגדר, כיתה ושם
+col1, col2 = st.columns([1.2, 2.8])
 with col1:
     gender = st.radio("התאמה מגדרית:", ["ילדה (נקבה)", "ילד (זכר)"])
+    class_group = st.radio("כיתה:", ["צעירים", "בוגרים"])
 with col2:
     student_name = st.text_input("שם הילד/ה:", value="", placeholder="הזיני את שם הילד/ה")
 
@@ -455,18 +520,38 @@ if st.button("הפק מטרות ויעדים"):
     if not input_text.strip():
         st.warning("אנא הזיני נתוני תפקוד.")
     else:
-        with st.spinner("מנתח דפוסים ומנסח מטרות ויעדים תפקודיים ממוקדי השתתפות..."):
+        with st.spinner(f"מנתח דפוסים ומנסח מטרות ויעדים תפקודיים המותאמים לכיתת {class_group}..."):
             try:
                 env_pronoun = "לסביבתה" if "נקבה" in gender else "לסביבתו"
+                
+                # סינון הדוגמאות בהתאם לכיתה שנבחרה
+                filtered_context = get_filtered_examples(examples_context, class_group)
+                st.session_state['selected_class'] = class_group
+
+                # הנחיות ייעודיות לצעירים מול בוגרים
+                if class_group == "צעירים":
+                    class_specific_instruction = """
+- **התאמה בלעדית לכיתת צעירים (קריטי ומחייב):**
+  * הילד/ה שייך/ת לכיתת צעירים. עליך להישען באופן בלעדי על סגנון הדוגמאות של הצעירים בלבד.
+  * **איסור מוחלט על מטרות או יעדים של הכנה לכיתה א':** אין לנסח מטרות או יעדים העוסקים במודעות פונולוגית, זיהוי/כתיבת אותיות וספרות, קריאה, חשבון פורמלי, אנליזה וסינתזה או ישיבה ממושכת לדפי עבודה.
+  * המטרות והיעדים יתמקדו בכישורי יסוד, תפקוד שגרתי יומיומי בגן, משחק הדדי ראשוני, הרחבת מיומנויות תקשורת והתפתחות מוטורית/שפתית תואמת גיל צעיר."""
+                else:
+                    class_specific_instruction = """
+- **התאמה לכיתת בוגרים (קריטי ומחייב):**
+  * הילד/ה שייך/ת לכיתת בוגרים. עליך להישען על סגנון הדוגמאות של הבוגרים (מיומנויות תפקוד מתקדמות, תפקודים ניהוליים, משחק חברתי עצמאי, פתרון קונפליקטים, שפה עשירה).
+  * **שילוב מטרות הכנה לכיתה א' (מודעות פונולוגית, כתיבת אותיות/ספרות, קריאה ראשונית, התארגנות למטלה לימודית):** 
+    יש לכלול מטרת הכנה לכיתה א' (או יעדים מותאמים לכך) **אך ורק אם מוקדי החיזוק של הילד/ה מצביעים בבירור על צורך וקושי בתחום זה** (כגון קשיים אורייניים, חשבון, תפקודים ניהוליים ללמידה או גרפומוטוריקה מתקדמת). אם מוקדי החיזוק של הילד/ה אינם מצריכים זאת – **אין להוסיף מטרת הכנה לכיתה א' באופן אוטומטי**, ויש להתמקד בתחומי התפקוד שבהם נדרש החיזוק."""
+
                 system_prompt = f"""
 אתה מומחה פדגוגי וקלינאי תקשורת בכיר לניסוח תכניות לימודים אישיות (תל\"א) בגני חינוך מיוחד.
-עליך לנסח תל\"א מקצועית עבור '{active_name}' ({gender}) מתוך הישענות עמוקה על מאגר הדוגמאות מתיקיית הדרייב.
+עליך לנסח תל\"א מקצועית עבור '{active_name}' ({gender}, כיתת {class_group}) מתוך הישענות עמוקה על מאגר הדוגמאות הייעודי מתיקיית הדרייב.
 
-### מאגר הדוגמאות המקצועיות ללמידה וחיקוי:
-{examples_context}
+### מאגר הדוגמאות המקצועיות ללמידה וחיקוי (מותאם לכיתת {class_group}):
+{filtered_context}
 
 ---
 ### עקרונות מחייבים לניסוח מטרות ויעדים:
+{class_specific_instruction}
 
 1. **מטרת-על – רחבה, כוללת ותמציתית:**
    - שאיפה תפקודית רחבה (למשל: "{active_name} תביע כוונות תקשורתיות באמצעות משפטים...", "{active_name} תשתתף באופן מילולי במשימות חשיבה...", "{active_name} תנהל שיחה באופן הדדי...").
@@ -506,7 +591,7 @@ if st.button("הפק מטרות ויעדים"):
                 client = genai.Client(api_key=api_key)
                 response = call_gemini_with_retry(
                     client=client,
-                    contents=f"נתוני התפקוד של {active_name} ({gender}):\n{input_text}",
+                    contents=f"נתוני התפקוד של {active_name} ({gender}, כיתת {class_group}):\n{input_text}",
                     config=types.GenerateContentConfig(
                         system_instruction=system_prompt,
                         response_mime_type="application/json",
@@ -539,15 +624,17 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # חיווי הצלחה ירוק
 if st.session_state.get('just_generated', False) and st.session_state.get('goals_list'):
-    st.success("המטרות והיעדים הופקו בהצלחה בדגש תפקודי ומוכוון השתתפות!")
+    target_class_badge = st.session_state.get('selected_class', class_group)
+    st.success(f"המטרות והיעדים הופקו בהצלחה בדגש תפקודי מותאם לכיתת {target_class_badge}!")
 
 # ממשק עריכה אינטראקטיבי
 if st.session_state['goals_list']:
     active_name = student_name.strip() if student_name.strip() else ("הילדה" if "נקבה" in gender else "הילד")
-    env_pronoun = "לסביבתה" if "נקבה" in gender else "לסביבתו"
+    current_class = st.session_state.get('selected_class', class_group)
+    active_class_context = get_filtered_examples(examples_context, current_class)
 
     st.markdown("---")
-    st.subheader("2. עריכה, דיוק והתאמת המטרות")
+    st.subheader(f"2. עריכה, דיוק והתאמת המטרות (כיתת {current_class})")
 
     for idx, goal in enumerate(st.session_state['goals_list']):
         g_ver = goal.get('ver', 0)
@@ -578,18 +665,18 @@ if st.session_state['goals_list']:
                             try:
                                 client = genai.Client(api_key=api_key)
                                 regen_prompt = f"""אתה מומחה לניסוח תל\"א בגני חינוך מיוחד.
-הצע ניסוח חלופי, כללי ותפקודי (מוכוון השתתפות פעילה בשגרת הגן) למטרת-העל עבור {active_name} ({gender}).
-התבסס באופן הדוק על הסגנון והשפה במאגר הדוגמאות:
-{examples_context}
+הצע ניסוח חלופי, כללי ותפקודי (מוכוון השתתפות פעילה בשגרת הגן) למטרת-העל עבור {active_name} ({gender}, כיתת {current_class}).
+התבסס באופן הדוק על הסגנון והשפה במאגר הדוגמאות של כיתת {current_class}:
+{active_class_context}
 
 הניסוח הנוכחי: '{goal['goal_title']}'
 רקע נתוני תפקוד:
 {st.session_state.get('current_input_text', '')}
 
 דגשים קריטיים:
-1. ניסוח תפקודי ברוח הדוגמאות (למשל: '{active_name} תשתתף...', '{active_name} תביע...', '{active_name} תיקח חלק...'). אסור לנסח 'תרכוש מיומנות'.
+1. ניסוח תפקודי ברוח הדוגמאות של כיתת {current_class} (למשל: '{active_name} תשתתף...', '{active_name} תביע...', '{active_name} תיקח חלק...'). אסור לנסח 'תרכוש מיומנות'.
 2. מטרת-על כללית וכוללת, קצרה ותמציתית, ללא תנאים ספציפיים בכותרת.
-3. השתמש בשם המפורש '{active_name}' ואל תכתוב 'הילדה' או 'הילד' (אלא אם זהו השם שנבחר).
+3. השתמש בשם המפורש '{active_name}'.
 4. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
                                 res = call_gemini_with_retry(
                                     client=client,
@@ -636,7 +723,7 @@ if st.session_state['goals_list']:
                                     client = genai.Client(api_key=api_key)
                                     res = call_gemini_with_retry(
                                         client=client,
-                                        contents=f"ערוך את מטרת-העל עבור {active_name} ({gender}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על סגנון הדוגמאות מתיקיית הדרייב ועל ניסוח תפקודי כולל, קצר ובהיר. השתמש בשם המפורש '{active_name}'. החזר טקסט בלבד.",
+                                        contents=f"ערוך את מטרת-העל עבור {active_name} ({gender}, כיתת {current_class}): '{goal['goal_title']}' לפי ההנחיה: '{prompt_g_val}'. שמור על סגנון הדוגמאות של כיתת {current_class} מתיקיית הדרייב ועל ניסוח תפקודי כולל, קצר ובהיר. השתמש בשם המפורש '{active_name}'. החזר טקסט בלבד.",
                                         config=types.GenerateContentConfig(temperature=0.2)
                                     )
                                     goal['goal_title'] = res.text.strip().replace('"', '').replace("'", "")
@@ -674,9 +761,9 @@ if st.session_state['goals_list']:
                                     try:
                                         client = genai.Client(api_key=api_key)
                                         regen_obj_prompt = f"""אתה מומחה לניסוח יעדים אופרטיביים בתל\"א לגני חינוך מיוחד.
-הצע ניסוח חלופי ליעד אופרטיבי זה בלבד עבור {active_name} ({gender}) הנגזר ממטרת-העל '{goal['goal_title']}'.
-התבסס באופן מלא על שפת הדוגמאות במאגר:
-{examples_context}
+הצע ניסוח חלופי ליעד אופרטיבי זה בלבד עבור {active_name} ({gender}, כיתת {current_class}) הנגזר ממטרת-העל '{goal['goal_title']}'.
+התבסס באופן מלא על שפת הדוגמאות של כיתת {current_class} במאגר:
+{active_class_context}
 
 היעד הנוכחי: '{obj_item.get('text', '')}'
 רקע נתוני תפקוד:
@@ -684,9 +771,10 @@ if st.session_state['goals_list']:
 
 דגשים מחייבים:
 1. **תפקוד יחיד וספציפי בלבד:** על היעד להתמקד בפעולה מדויקת אחת (ללא העמסה וללא סרבול).
-2. ניסוח בהיר, קצר וישיר שפותח בשם המפורש '{active_name}'.
-3. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות.
-4. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
+2. התאמה לרמת כיתת {current_class}.
+3. ניסוח בהיר, קצר וישיר שפותח בשם המפורש '{active_name}'.
+4. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות.
+5. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
                                         res = call_gemini_with_retry(
                                             client=client,
                                             contents=regen_obj_prompt,
@@ -730,7 +818,7 @@ if st.session_state['goals_list']:
                                             client = genai.Client(api_key=api_key)
                                             res = call_gemini_with_retry(
                                                 client=client,
-                                                contents=f"ערוך את היעד של {active_name} ({gender}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', עוסק בתפקוד יחיד ומוגדר בלבד, ללא סרבול, ופותח בשם '{active_name}'. החזר משפט יחיד בלבד.",
+                                                contents=f"ערוך את היעד של {active_name} ({gender}, כיתת {current_class}): '{obj_item.get('text', '')}' לפי ההנחיה: '{prompt_obj_val}'. ודא שהיעד נגזר ממטרת-העל: '{goal['goal_title']}', עוסק בתפקוד יחיד ומוגדר בלבד, ללא סרבול, מותאם לכיתת {current_class}, ופותח בשם '{active_name}'. החזר משפט יחיד בלבד.",
                                                 config=types.GenerateContentConfig(temperature=0.2)
                                             )
                                             obj_item['text'] = res.text.strip().replace('"', '').replace("'", "")
@@ -762,9 +850,9 @@ if st.session_state['goals_list']:
                             try:
                                 client = genai.Client(api_key=api_key)
                                 prompt_add = f"""אתה מומחה לניסוח תל\"א.
-הוסף יעד אופרטיבי נוסף, ספציפי וממוקד בתפקוד יחיד, שנגזר ישירות ממטרת-העל: '{goal['goal_title']}' עבור {active_name} ({gender}).
-התבסס על הסגנון והטרמינולוגיה בדוגמאות:
-{examples_context}
+הוסף יעד אופרטיבי נוסף, ספציפי וממוקד בתפקוד יחיד, שנגזר ישירות ממטרת-העל: '{goal['goal_title']}' עבור {active_name} ({gender}, כיתת {current_class}).
+התבסס על הסגנון והטרמינולוגיה בדוגמאות של כיתת {current_class}:
+{active_class_context}
 
 הקפד לפתוח בשם המפורש '{active_name}', לשמור על ניסוח קצר וממוקד בתפקוד יחיד ללא סרבול. החזר משפט יחיד בלבד ללא מרכאות."""
                                 res = call_gemini_with_retry(
@@ -799,9 +887,9 @@ if st.session_state['goals_list']:
                             try:
                                 client = genai.Client(api_key=api_key)
                                 prompt_add = f"""אתה מומחה לניסוח תל\"א.
-הוסף יעד אופרטיבי נוסף, ספציפי וממוקד בתפקוד יחיד, שנגזר ישירות ממטרת-העל: '{goal['goal_title']}' עבור {active_name} ({gender}).
-התבסס על הסגנון והטרמינולוגיה בדוגמאות:
-{examples_context}
+הוסף יעד אופרטיבי נוסף, ספציפי וממוקד בתפקוד יחיד, שנגזר ישירות ממטרת-העל: '{goal['goal_title']}' עבור {active_name} ({gender}, כיתת {current_class}).
+התבסס על הסגנון והטרמינולוגיה בדוגמאות של כיתת {current_class}:
+{active_class_context}
 
 דגש מיוחד ליעד: {add_obj_val}.
 הקפד לפתוח בשם המפורש '{active_name}', לשמור על ניסוח קצר וממוקד בתפקוד יחיד ללא סרבול. החזר משפט יחיד בלבד ללא מרכאות."""
@@ -848,16 +936,16 @@ if st.session_state['goals_list']:
             submit_add_goal = st.form_submit_button("הוסף מטרה זו")
 
         if submit_add_goal and custom_prompt.strip():
-            with st.spinner("מנסח מטרה ויעדים תפקודיים על בסיס הדוגמאות..."):
+            with st.spinner(f"מנסח מטרה ויעדים תפקודיים על בסיס דוגמאות {current_class}..."):
                 try:
                     client = genai.Client(api_key=api_key)
                     add_prompt = f"""
 אתה מומחה לניסוח תל\"א בגני חינוך מיוחד.
-נסח מטרה חדשה בתחום '{custom_prompt}' עבור {active_name} ({gender}) על בסיס מאגר הדוגמאות:
-{examples_context}
+נסח מטרה חדשה בתחום '{custom_prompt}' עבור {active_name} ({gender}, כיתת {current_class}) על בסיס מאגר הדוגמאות של כיתת {current_class}:
+{active_class_context}
 
 כללים:
-1. מטרת-על כללית וכוללת בדגש על השתתפות ותפקוד יומיומי ברוח הדוגמאות עבור '{active_name}' (ללא 'תרכוש מיומנות').
+1. מטרת-על כללית וכוללת בדגש על השתתפות ותפקוד יומיומי ברוח דוגמאות ה{current_class} עבור '{active_name}' (ללא 'תרכוש מיומנות').
 2. בדיוק 3 יעדים אופרטיביים ממוקדים (כל יעד עוסק בתפקוד יחיד וברור, ללא סרבול והעמסה) שנגזרים ממנה ופותחים בשם '{active_name}'.
 3. דרכי הוראה טיפוליות מעשיות.
 
