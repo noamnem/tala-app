@@ -14,7 +14,7 @@ from docx.table import Table
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml import parse_xml
+from docx.oxml import parse_xml, OxmlElement
 from docx.oxml.ns import nsdecls, qn
 import gdown
 
@@ -24,7 +24,6 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap');
 
-    /* החלת גופן אלף, גודל ברור ומרווח שורות מהודק וקומפקטי */
     html, body, .stMarkdown, p, h1, h2, h3, h4, label, input, textarea, button, select, [class*="css"], details, summary {
         font-family: 'Alef', sans-serif !important;
         direction: rtl !important;
@@ -38,7 +37,6 @@ st.markdown("""
         margin-bottom: 0.2rem !important;
     }
 
-    /* צמצום מרווחים סביב קווי הפרדה */
     hr {
         margin-top: 0.35rem !important;
         margin-bottom: 0.35rem !important;
@@ -46,7 +44,6 @@ st.markdown("""
         border-top: 1px solid #e2e8f0 !important;
     }
 
-    /* הסתרת סרגל הכלים העליון של Streamlit (GitHub, Share, 3 נקודות) לכל המשתמשים */
     header[data-testid="stHeader"],
     [data-testid="stHeader"],
     .stAppHeader,
@@ -59,7 +56,6 @@ st.markdown("""
         height: 0 !important;
     }
 
-    /* צמצום מרווחי אלמנטים פנימיים בתוך חלונות המטרות */
     [data-testid="stExpander"] div[data-testid="stElementContainer"] {
         margin-bottom: 0.25rem !important;
     }
@@ -78,7 +74,6 @@ st.markdown("""
         margin-bottom: 0.4rem !important;
     }
 
-    /* כותרת ראשית – טקסט שחור, נקי ומודגש ללא מאפייני כפתור כלל */
     a.title-link, a.title-link:hover, a.title-link:visited, a.title-link:active, a.title-link:focus {
         text-decoration: none !important;
         color: #111111 !important;
@@ -101,7 +96,6 @@ st.markdown("""
         border: none !important;
     }
 
-    /* כותרות חלונות המטרות */
     [data-testid="stExpander"] details summary p {
         font-size: 1.18rem !important;
         font-weight: 700 !important;
@@ -109,7 +103,6 @@ st.markdown("""
         line-height: 1.3 !important;
     }
 
-    /* דגל יחיד מימין לכותרת המטרה */
     [data-testid="stExpander"] details summary p::before {
         content: "";
         display: inline-block;
@@ -122,14 +115,12 @@ st.markdown("""
         background-repeat: no-repeat;
     }
 
-    /* הסתרת הודעת 'Press Enter to apply' */
     [data-testid="InputInstructions"],
     .stTextInput small,
     div[data-testid="InputInstructions"] {
         display: none !important;
     }
 
-    /* מלבן חיווי ירוק ממורכז לחלוטין לאורך ולרוחב */
     div[data-testid="stAlert"] {
         background-color: #e8f5e9 !important;
         border: none !important;
@@ -169,7 +160,6 @@ st.markdown("""
         background: transparent !important;
     }
 
-    /* תיקון האייקונים של המערכת */
     [data-testid="stIcon"],
     [data-testid="stExpanderToggleIcon"],
     [class*="material-symbols"],
@@ -180,12 +170,10 @@ st.markdown("""
         text-align: left !important;
     }
 
-    /* הסתרת סרגל ההגדרות בצד */
     [data-testid="stSidebar"] {
         display: none;
     }
 
-    /* כפתור סטטוס דרייב תכלת */
     div[data-testid="stPopover"] {
         position: fixed !important;
         top: 12px !important;
@@ -215,7 +203,6 @@ st.markdown("""
         text-align: right !important;
     }
 
-    /* כפתור בטל שינוי בשורה העליונה הקפואה בצד ימין */
     .marker-undo-top {
         display: none !important;
     }
@@ -268,7 +255,6 @@ st.markdown("""
         background-repeat: no-repeat;
     }
 
-    /* עיצוב כפתורים כללי בתכלת */
     .stButton>button, [data-testid="stFormSubmitButton"]>button {
         width: 100%;
         border-radius: 8px;
@@ -289,7 +275,6 @@ st.markdown("""
         color: #0c4a6e !important;
     }
 
-    /* כפתור ראשי תכלת מלא */
     .main-btn>button {
         background-color: #0288D1 !important;
         color: white !important;
@@ -302,7 +287,6 @@ st.markdown("""
         color: white !important;
     }
 
-    /* מניעת רווחים מתגיות מרקרים */
     .marker-regen, .marker-edit, .marker-del, .marker-plus, .marker-download {
         display: none !important;
     }
@@ -322,9 +306,6 @@ st.markdown("""
         min-height: 0 !important;
     }
 
-    /* שילוב האייקונים בכפתורים */
-
-    /* חץ עגול - נסח מחדש */
     div[data-testid="element-container"]:has(.marker-regen) + div[data-testid="element-container"] button p::before,
     div.stElementContainer:has(.marker-regen) + div.stElementContainer button p::before {
         content: "";
@@ -338,7 +319,6 @@ st.markdown("""
         background-repeat: no-repeat;
     }
 
-    /* עפרון - ערוך לפי תיאור */
     div[data-testid="element-container"]:has(.marker-edit) + div[data-testid="element-container"] button p::before,
     div.stElementContainer:has(.marker-edit) + div.stElementContainer button p::before {
         content: "";
@@ -352,7 +332,6 @@ st.markdown("""
         background-repeat: no-repeat;
     }
 
-    /* פח - מחק מטרה / מחק יעד */
     div[data-testid="element-container"]:has(.marker-del) + div[data-testid="element-container"] button p::before,
     div.stElementContainer:has(.marker-del) + div.stElementContainer button p::before {
         content: "";
@@ -366,7 +345,6 @@ st.markdown("""
         background-repeat: no-repeat;
     }
 
-    /* פלוס - הוסף יעד */
     div[data-testid="element-container"]:has(.marker-plus) + div[data-testid="element-container"] button p::before,
     div.stElementContainer:has(.marker-plus) + div.stElementContainer button p::before {
         content: "";
@@ -380,7 +358,6 @@ st.markdown("""
         background-repeat: no-repeat;
     }
 
-    /* כפתור הורדת Word - תכלת מלא */
     .download-btn>button {
         background-color: #0288D1 !important;
         color: #ffffff !important;
@@ -406,7 +383,6 @@ st.markdown("""
         background-repeat: no-repeat;
     }
 
-    /* תיקון אזור העלאת קבצים */
     [data-testid="stFileUploader"] section {
         direction: ltr !important;
         text-align: left !important;
@@ -415,7 +391,6 @@ st.markdown("""
         direction: ltr !important;
     }
 
-    /* מתיחה מדויקת של חלון דרכי ההוראה */
     div.teach-box div[data-baseweb="textarea"],
     div.teach-box textarea,
     textarea[aria-label*="דרכי הוראה"] {
@@ -474,7 +449,6 @@ def sync_and_load_drive_examples():
     return "\n\n".join(combined_examples)
 
 def get_filtered_examples(full_context, target_class):
-    """מסנן ומבודד מתוך מאגר הדוגמאות רק את הדוגמאות השייכות לכיתה המבוקשת (צעירים או בוגרים)"""
     if not full_context:
         return ""
     chunks = re.split(r'(?=(?:^|\n)\s*דוגמ[הא]\s*\d+)', full_context)
@@ -484,7 +458,12 @@ def get_filtered_examples(full_context, target_class):
         if not lines:
             continue
         first_line = lines[0]
-        if "צעירים" in first_line or "בוגרים" in first_line:
+        
+        is_shared = ("צעירים" in first_line) and ("בוגרים" in first_line)
+        
+        if is_shared:
+            filtered.append(chunk.strip())
+        elif "צעירים" in first_line or "בוגרים" in first_line:
             if target_class in first_line:
                 filtered.append(chunk.strip())
         else:
@@ -507,7 +486,6 @@ def safe_parse_json(text_content):
     return json.loads(t)
 
 def ensure_unique_ids(goals):
-    """מוודא שלכל מטרה ולכל יעד יש מזהה ייחודי קבוע למניעת בלבול בעת מחיקה"""
     for g in goals:
         if 'id' not in g:
             g['id'] = f"g_{uuid.uuid4().hex[:8]}"
@@ -539,7 +517,6 @@ def call_gemini_with_retry(client, contents, config=None, max_retries=3, initial
     raise last_err
 
 def push_to_history():
-    """שומר צילום מצב במחסנית ההיסטוריה לפני ביצוע שינוי"""
     if 'goals_list' in st.session_state and st.session_state['goals_list']:
         if 'history_stack' not in st.session_state:
             st.session_state['history_stack'] = []
@@ -552,7 +529,17 @@ def push_to_history():
 with st.spinner("מסנכרן דוגמאות מתיקיית הדרייב..."):
     examples_context = sync_and_load_drive_examples()
 
-# כפתור סטטוס Google Drive בצד שמאל בשורה העליונה הקפואה
+if st.session_state.get('history_stack'):
+    st.markdown('<span class="marker-undo-top"></span>', unsafe_allow_html=True)
+    if st.button("בטל שינוי", key="btn_global_undo"):
+        popped = st.session_state['history_stack'].pop()
+        restored = json.loads(popped)
+        ensure_unique_ids(restored)
+        st.session_state['goals_list'] = restored
+        st.session_state['state_rev'] = st.session_state.get('state_rev', 0) + 1
+        st.session_state['last_known_state'] = json.dumps(restored, ensure_ascii=False)
+        st.rerun()
+
 with st.popover("מאגר דרייב"):
     st.markdown("**סטטוס חיבור ל-Google Drive:**")
     if examples_context:
@@ -572,19 +559,6 @@ with st.popover("מאגר דרייב"):
         st.cache_data.clear()
         st.rerun()
 
-# כפתור "בטל שינוי" קבוע בראש העמוד מצד ימין באותה שורה קפואה
-if st.session_state.get('history_stack'):
-    st.markdown('<span class="marker-undo-top"></span>', unsafe_allow_html=True)
-    if st.button("בטל שינוי", key="btn_global_undo"):
-        popped = st.session_state['history_stack'].pop()
-        restored = json.loads(popped)
-        ensure_unique_ids(restored)
-        st.session_state['goals_list'] = restored
-        st.session_state['state_rev'] = st.session_state.get('state_rev', 0) + 1
-        st.session_state['last_known_state'] = json.dumps(restored, ensure_ascii=False)
-        st.rerun()
-
-# כותרת ראשית – טקסט שחור, בולד וגדול (לחיצה עליה מרעננת ומאפסת למסך הבית)
 st.markdown('<a href="./" target="_self" class="title-link"><h1 class="main-title">ממשק חכם לניסוח תל"א</h1></a>', unsafe_allow_html=True)
 st.caption("מערכת לגזירת מטרות על ויעדים אופרטיביים על בסיס תיאור הילד/ה")
 
@@ -602,7 +576,6 @@ if 'goals_list' not in st.session_state:
 if 'raw_uploaded_table' not in st.session_state:
     st.session_state['raw_uploaded_table'] = []
 
-# טופס ראשי עם בחירת מגדר, כיתה ושם
 col1, col2 = st.columns([1.2, 2.8])
 with col1:
     gender = st.radio("התאמה מגדרית:", ["ילדה (נקבה)", "ילד (זכר)"])
@@ -627,9 +600,9 @@ if uploaded_file is not None:
         parsed_table_rows = []
         for table in doc_uploaded.tables:
             for row in table.rows:
-                cells_text = [c.text.replace("\n", " ").strip() for c in row.cells]
+                cells_text = [c.text.strip() for c in row.cells]
                 parsed_table_rows.append(cells_text)
-                extracted.append(" | ".join(cells_text))
+                extracted.append(" | ".join([c.replace("\n", " ") for c in cells_text]))
         st.session_state['raw_uploaded_table'] = parsed_table_rows
         input_text = "\n".join(extracted)
         st.success("הקובץ נטען בהצלחה.")
@@ -646,13 +619,9 @@ if st.button("הפק מטרות ויעדים"):
     else:
         with st.spinner(f"מנתח דפוסים ומנסח מטרות ויעדים תפקודיים המותאמים לכיתת {class_group}..."):
             try:
-                env_pronoun = "לסביבתה" if "נקבה" in gender else "לסביבתו"
-                
-                # סינון הדוגמאות בהתאם לכיתה שנבחרה
                 filtered_context = get_filtered_examples(examples_context, class_group)
                 st.session_state['selected_class'] = class_group
 
-                # הנחיות ייעודיות לצעירים מול בוגרים
                 if class_group == "צעירים":
                     class_specific_instruction = """
 - **התאמה בלעדית לכיתת צעירים (קריטי ומחייב):**
@@ -677,25 +646,23 @@ if st.button("הפק מטרות ויעדים"):
 ### עקרונות מחייבים לניסוח מטרות ויעדים:
 {class_specific_instruction}
 
-1. **מטרת-על – רחבה, כוללת ותמציתית:**
-   - שאיפה תפקודית רחבה (למשל: "{active_name} תביע כוונות תקשורתיות באמצעות משפטים...", "{active_name} תשתתף באופן מילולי במשימות חשיבה...", "{active_name} תנהל שיחה באופן הדדי...").
-   - קצרה, ללא פירוט תנאים ספציפיים וללא חיבור שני תחומים ב-ו' החיבור.
+1. **חיקוי סגנון מאגר הדוגמאות (קריטי):**
+   - העתק את התבניות הלשוניות של המטרות מתוך מאגר הדוגמאות. אל תשתמש בניסוחי "בינה מלאכותית" עמוסים או גנריים (כגון "תביע מגוון רעיונות ומחשבות...").
+   - **השראה לניסוחי חשיבה גבוהה:** כאשר מוקדי החיזוק מתאימים לכך (הסקת מסקנות, פתרון בעיות, ניבוי וכדומה), מומלץ להיעזר בניסוחים מקצועיים המופיעים רבות במאגר, כגון: "{active_name} תשתתף באופן מילולי במשימות הדורשות חשיבה מופשטת". התאם את הניסוח למקרה הספציפי ואל תשתמש בו אם אינו מתאים לתיאור הילד/ה.
 
 2. **היעדים האופרטיביים – ספציפיים לתפקוד יחיד, חדים וללא סרבול (כלל קריטי):**
    - **כל יעד עוסק בתפקוד אחד ויחיד בלבד!**
-   - **איסור מוחלט על העמסה וסרבול:** אין לדחוס מספר פעולות, תנאים ורמות תיווך באותו משפט (למשל, אין לכתוב: "{active_name} תשתמש במשפטים פשוטים להבעת צרכים, רצונות ורעיונות באופן המובן לסביבתה במהלך פעילויות השגרה והמשחק בגן, בתיווך מבוגר הולך ופוחת").
+   - **איסור מוחלט על העמסה וסרבול:** אין לדחוס מספר פעולות, תנאים ורמות תיווך באותו משפט.
    - **יש לפרק לתפקודים בודדים ומדויקים, לדוגמה:**
      * יעד 1: "{active_name} תביע צרכים ורצונות באמצעות משפטים פשוטים"
      * יעד 2: "{active_name} תביע רעיונות במשחק עם מבוגר באמצעות שימוש במשפטים פשוטים"
      * יעד 3: "{active_name} תשתף בחוויה אישית קצרה באמצעות רצף משפטים פשוטים"
-   - **בנושא מובנות דיבור והיגוי:** אם קיים קושי במובנות/היגוי, יש להקדיש לו **יעד נפרד וספציפי** (למשל: "{active_name} תהגה מילים דו-הברתיות באופן מובן בתוך שטף הדיבור"), ולא להעמיס את הביטוי "באופן המובן לסביבתה" על שאר יעדי השפה.
+   - **בנושא מובנות דיבור והיגוי:** אם קיים קושי במובנות/היגוי, יש להקדיש לו **יעד נפרד וספציפי**.
 
-3. **התאמה מלאה למוקדי החיזוק של הילד/ה:**
-   - גזור את המטרות והיעדים אך ורק מתוך תחומי הקושי שצוינו בטבלת התפקוד שהוזנה.
-
-4. **דרכי הוראה, שיטות ואמצעים:** פירוט מעשי של אסטרטגיות מתוך שגרת הגן והטיפולים (שיחה בפת שחרית, משחקי קופסה, משחקי דמיון, מדרשי תמונה, מחברת שפה, טיפול פרטני/בזוגות, הדרכת הורים).
-
-5. **כמות מחייבת:** בדיוק 3 מטרות-על. לכל מטרת-על בדיוק 3 יעדים ספציפיים.
+3. **התאמה מלאה למוקדי החיזוק של הילד/ה:** גזור את המטרות והיעדים אך ורק מתוך תחומי הקושי שצוינו בטבלת התפקוד שהוזנה.
+4. **קשר הגיוני ולכידות:** ודא קשר ישיר והדוק בין מטרת-העל לבין שלושת היעדים שנגזרים ממנה. על היעדים להוות צעדים מעשיים להשגת מטרת העל.
+5. **דרכי הוראה, שיטות ואמצעים:** פירוט מעשי של אסטרטגיות מתוך שגרת הגן והטיפולים.
+6. **כמות מחייבת:** בדיוק 3 מטרות-על. לכל מטרת-על בדיוק 3 יעדים ספציפיים.
 
 ---
 ### מבנה הפלט הנדרש (JSON בלבד):
@@ -747,12 +714,10 @@ if st.button("הפק מטרות ויעדים"):
                 st.error(f"שגיאה בהפקה (עומס זמני בשרתים): {e}. אנא נסי שוב בעוד מספר שניות.")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# חיווי הצלחה ירוק
 if st.session_state.get('just_generated', False) and st.session_state.get('goals_list'):
     target_class_badge = st.session_state.get('selected_class', class_group)
     st.success(f"המטרות והיעדים הופקו בהצלחה בדגש תפקודי מותאם לכיתת {target_class_badge}!")
 
-# ממשק עריכה אינטראקטיבי
 if st.session_state['goals_list']:
     ensure_unique_ids(st.session_state['goals_list'])
     active_name = student_name.strip() if student_name.strip() else ("הילדה" if "נקבה" in gender else "הילד")
@@ -768,7 +733,6 @@ if st.session_state['goals_list']:
         current_title = goal.get('goal_title', '')
 
         with st.expander(f"מטרה {idx+1}: {current_title}", expanded=True, key=f"goal_expander_{g_id}"):
-            # 1. כותרת מטרה ותחומי תפקוד (מקושרים למזהה קבוע ולמונה גרסה)
             goal['goal_title'] = st.text_input(
                 f"כותרת מטרה {idx+1}:", 
                 value=current_title, 
@@ -781,7 +745,6 @@ if st.session_state['goals_list']:
                 key=f"dom_{g_id}_{rev}"
             )
 
-            # שורת כפתורי פעולה למטרה
             c_g_box, _ = st.columns([5, 5], gap="small")
             with c_g_box:
                 c_g1, c_g2, c_g3 = st.columns([1.1, 1.35, 1.0], gap="small")
@@ -793,19 +756,15 @@ if st.session_state['goals_list']:
                             try:
                                 client = genai.Client(api_key=api_key)
                                 regen_prompt = f"""אתה מומחה לניסוח תל\"א בגני חינוך מיוחד.
-הצע ניסוח חלופי, כללי ותפקודי (מוכוון השתתפות פעילה בשגרת הגן) למטרת-העל עבור {active_name} ({gender}, כיתת {current_class}).
-התבסס באופן הדוק על הסגנון והשפה במאגר הדוגמאות של כיתת {current_class}:
-{active_class_context}
-
+עליך לנסח מחדש את מטרת-העל הבאה עבור {active_name} ({gender}, כיתת {current_class}).
 הניסוח הנוכחי: '{goal['goal_title']}'
-רקע נתוני תפקוד:
-{st.session_state.get('current_input_text', '')}
 
 דגשים קריטיים:
-1. ניסוח תפקודי ברוח הדוגמאות של כיתת {current_class} (למשל: '{active_name} תשתתף...', '{active_name} תביע...', '{active_name} תיקח חלק...'). אסור לנסח 'תרכוש מיומנות'.
-2. מטרת-על כללית וכוללת, קצרה ותמציתית, ללא תנאים ספציפיים בכותרת.
-3. השתמש בשם המפורש '{active_name}'.
-4. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
+1. **שמירה מוחלטת על המשמעות (קריטי):** הניסוח החלופי חייב לעסוק בדיוק באותו נושא ובאותו רעיון מרכזי של המטרה הנוכחית. בשום אופן אל תמציא מטרה חדשה ואל תחליף את נושא המטרה. אתה רק מנסח את אותו הדבר במילים אחרות.
+2. ניסוח תפקודי ברוח הדוגמאות של כיתת {current_class} במאגר. אסור לנסח 'תרכוש מיומנות'.
+3. אם המטרה עוסקת בחשיבה גבוהה והדבר מתאים לרקע התפקודי, תוכל לשאוב השראה מהניסוח השכיח במאגר: "{active_name} תשתתף באופן מילולי במשימות הדורשות חשיבה מופשטת", תוך התאמתו למקרה הספציפי.
+4. מטרת-על כללית וכוללת, קצרה ותמציתית. השתמש בשם המפורש '{active_name}'.
+5. החזר אך ורק מחרוזת טקסט פשוטה של המטרה ללא מרכאות."""
                                 res = call_gemini_with_retry(
                                     client=client,
                                     contents=regen_prompt,
@@ -834,7 +793,6 @@ if st.session_state['goals_list']:
                         st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                         st.rerun()
 
-            # חלון עריכת מטרה שנפתח רק בלחיצה
             if st.session_state.get(f"show_edit_g_{g_id}", False):
                 c_form_g, _ = st.columns([5, 5], gap="small")
                 with c_form_g:
@@ -871,7 +829,6 @@ if st.session_state['goals_list']:
 
             st.markdown("---")
 
-            # מבנה טבלאי של היעדים ודרכי ההוראה
             t_col_left, t_col_right = st.columns([6, 4])
             with t_col_left:
                 for o_idx, obj_item in enumerate(goal.get('objectives_list', [])):
@@ -887,7 +844,6 @@ if st.session_state['goals_list']:
                             key=f"obj_txt_{o_id}_{rev}"
                         )
 
-                        # שורת כפתורי פעולה ליעד (מקושרים למזהה היעד בלבד)
                         c_b1, c_b2, c_b3 = st.columns([1.1, 1.35, 1.0], gap="small")
 
                         with c_b1:
@@ -898,19 +854,15 @@ if st.session_state['goals_list']:
                                         client = genai.Client(api_key=api_key)
                                         regen_obj_prompt = f"""אתה מומחה לניסוח יעדים אופרטיביים בתל\"א לגני חינוך מיוחד.
 הצע ניסוח חלופי ליעד אופרטיבי זה בלבד עבור {active_name} ({gender}, כיתת {current_class}) הנגזר ממטרת-העל '{goal['goal_title']}'.
-התבסס באופן מלא על שפת הדוגמאות של כיתת {current_class} במאגר:
-{active_class_context}
-
 היעד הנוכחי: '{obj_item.get('text', '')}'
-רקע נתוני תפקוד:
-{st.session_state.get('current_input_text', '')}
 
 דגשים מחייבים:
-1. **תפקוד יחיד וספציפי בלבד:** על היעד להתמקד בפעולה מדויקת אחת (ללא העמסה וללא סרבול).
-2. התאמה לרמת כיתת {current_class}.
-3. ניסוח בהיר, קצר וישיר שפותח בשם המפורש '{active_name}'.
-4. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות.
-5. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
+1. **שמירה על הרעיון המקורי:** הניסוח החלופי חייב לשמור על אותו רעיון תפקודי של היעד הנוכחי. אל תמציא יעד חדש.
+2. **תפקוד יחיד וספציפי בלבד:** על היעד להתמקד בפעולה מדויקת אחת.
+3. התאמה לרמת כיתת {current_class} תוך חיקוי סגנון הניסוח מהדוגמאות.
+4. ניסוח בהיר, קצר וישיר שפותח בשם המפורש '{active_name}'.
+5. איסור על ניסוח 'תרכוש מיומנות' - השתמש בפועל של עשייה והשתתפות.
+6. החזר משפט יחיד בלבד ללא מרכאות או תוספות."""
                                         res = call_gemini_with_retry(
                                             client=client,
                                             contents=regen_obj_prompt,
@@ -934,13 +886,11 @@ if st.session_state['goals_list']:
                             st.markdown('<span class="marker-del"></span>', unsafe_allow_html=True)
                             if st.button("מחק יעד", key=f"del_obj_{o_id}"):
                                 push_to_history()
-                                # מחיקה מוחלטת ומדויקת לפי מזהה היעד (ללא תלות באינדקס)
                                 goal['objectives_list'] = [o for o in goal['objectives_list'] if o.get('id') != o_id]
                                 st.session_state['state_rev'] = rev + 1
                                 st.session_state['last_known_state'] = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
                                 st.rerun()
 
-                        # חלון עריכת יעד שנפתח רק בלחיצה
                         if st.session_state.get(f"show_pr_obj_{o_id}", False):
                             with st.form(key=f"form_pr_obj_{o_id}", clear_on_submit=False, border=False):
                                 f_col1, f_col2 = st.columns([4, 1], gap="small")
@@ -984,7 +934,6 @@ if st.session_state['goals_list']:
 
                     st.markdown("---")
 
-                # הוספת יעד חדש
                 st.markdown("**הוספת יעד חדש:**")
                 c_add_btn_box, _ = st.columns([5, 5], gap="small")
                 with c_add_btn_box:
@@ -1016,7 +965,6 @@ if st.session_state['goals_list']:
                             except Exception as e:
                                 st.error(f"שגיאה בהוספת יעד (עומס זמני בשרתי המודל): {e}. אנא נסי שוב.")
 
-                # שורת הוספת יעד על פי תיאור עם כפתור שלח
                 with st.form(key=f"form_add_obj_custom_{g_id}", clear_on_submit=False, border=False):
                     f_col1, f_col2 = st.columns([5, 1], gap="small")
                     with f_col1:
@@ -1070,7 +1018,6 @@ if st.session_state['goals_list']:
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
-    # מעקב מדויק אחר עריכות ידניות בטפסים ובשדות טקסט
     current_snap = json.dumps(st.session_state['goals_list'], ensure_ascii=False)
     if 'last_known_state' not in st.session_state:
         st.session_state['last_known_state'] = current_snap
@@ -1082,7 +1029,6 @@ if st.session_state['goals_list']:
             st.session_state['history_stack'].pop(0)
         st.session_state['last_known_state'] = current_snap
 
-    # הוספת מטרה נוספת
     st.markdown("#### הוספת מטרה נוספת")
     with st.form(key="form_add_goal", clear_on_submit=False, border=False):
         col_new1, col_new2 = st.columns([3, 1], gap="small")
@@ -1108,7 +1054,7 @@ if st.session_state['goals_list']:
 
 כללים:
 1. מטרת-על כללית וכוללת בדגש על השתתפות ותפקוד יומיומי ברוח דוגמאות ה{current_class} עבור '{active_name}' (ללא 'תרכוש מיומנות').
-2. בדיוק 3 יעדים אופרטיביים ממוקדים (כל יעד עוסק בתפקוד יחיד וברור, ללא סרבול והעמסה) שנגזרים ממנה ופותחים בשם '{active_name}'.
+2. בדיוק 3 יעדים אופרטיביים ממוקדים שנגזרים ממנה ופותחים בשם '{active_name}'.
 3. דרכי הוראה טיפוליות מעשיות.
 
 החזר JSON יחיד בלבד במבנה:
@@ -1145,103 +1091,68 @@ if st.session_state['goals_list']:
                 except Exception as e:
                     st.error(f"שגיאה בהוספת מטרה: {e}. אנא נסי שוב.")
 
-    # ייצוא קובץ Word
     st.markdown("---")
     st.subheader("3. ייצוא המסמך הסופי")
 
-    def apply_pPr_rtl(p, align="right", space_after_pt=3, line_spacing=1.15):
-        val_align = "center" if (align == "center" or align == WD_ALIGN_PARAGRAPH.CENTER) else "right"
-        sp_after = str(int(space_after_pt * 20)) if space_after_pt is not None else "60"
-        ln_sp = str(int(line_spacing * 240)) if line_spacing is not None else "276"
-
-        pPr_xml = (
-            f'<w:pPr {nsdecls("w")}>'
-            f'<w:bidi/>'
-            f'<w:spacing w:after="{sp_after}" w:line="{ln_sp}" w:lineRule="auto"/>'
-            f'<w:jc w:val="{val_align}"/>'
-            f'</w:pPr>'
-        )
-        pPr_new = parse_xml(pPr_xml)
-        if p._p.pPr is not None:
-            p._p.remove(p._p.pPr)
-        p._p.insert(0, pPr_new)
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER if val_align == "center" else WD_ALIGN_PARAGRAPH.RIGHT
-
-    def apply_rPr_david_rtl(run, bold=None, size_pt=None, italic=False, underline=False):
-        is_bold = bold if bold is not None else bool(run.bold)
-        sz_pt = size_pt if size_pt is not None else (run.font.size.pt if run.font.size else 11.0)
-        half_sz = str(int(sz_pt * 2))
-
-        b_tag = "<w:b/><w:bCs/>" if is_bold else ""
-        i_tag = "<w:i/><w:iCs/>" if italic else ""
-        u_tag = '<w:u w:val="single"/>' if underline else ""
-
-        rPr_xml = (
-            f'<w:rPr {nsdecls("w")}>'
-            f'<w:rFonts w:ascii="David" w:hAnsi="David" w:cs="David"/>'
-            f'{b_tag}'
-            f'{i_tag}'
-            f'<w:sz w:val="{half_sz}"/>'
-            f'<w:szCs w:val="{half_sz}"/>'
-            f'{u_tag}'
-            f'<w:rtl/>'
-            f'<w:lang w:bidi="he-IL"/>'
-            f'</w:rPr>'
-        )
-        rPr_new = parse_xml(rPr_xml)
-        if run._r.rPr is not None:
-            run._r.remove(run._r.rPr)
-        run._r.insert(0, rPr_new)
-        run.font.name = 'David'
-        run.font.size = Pt(sz_pt)
-        run.bold = is_bold
-
-    def set_cell_clean_text(cell, text, bold=False, size_pt=11.0, align="right"):
-        cell.text = ""
-        lines = str(text).split("\n")
-        for i, line in enumerate(lines):
-            p = cell.paragraphs[0] if i == 0 else cell.add_paragraph()
-            r = p.add_run(line)
-            apply_rPr_david_rtl(r, bold=bold, size_pt=size_pt)
-            apply_pPr_rtl(p, align=align, space_after_pt=2)
-
-        tcPr = cell._tc.get_or_add_tcPr()
-        for el in tcPr.findall(qn('w:tcMar')):
-            tcPr.remove(el)
-        tcPr.append(parse_xml(f'<w:tcMar {nsdecls("w")}><w:top w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar>'))
-
     def build_template_docx():
-        template_candidates = ["template.docx", "מבנה הקובץ.docx", "מבנה הקובץ_2.docx", "מבנה הקובץ_3.docx", "template_tala.docx"]
+        
+        # פונקציית עזר פנימית שמוסיפה טקסט עברי תקני לפסקה בלי למחוק את עיצוב הבסיס
+        def add_hebrew_run(p, text, bold=False, size_pt=11.0):
+            r = p.add_run(text)
+            r.font.name = 'David'
+            r.font.size = Pt(size_pt)
+            r.bold = bold 
+            rPr = r._r.get_or_add_rPr()
+            if rPr.find(qn('w:rtl')) is None:
+                rPr.append(OxmlElement('w:rtl'))
+            if bold and rPr.find(qn('w:bCs')) is None:
+                bCs = OxmlElement('w:bCs')
+                bCs.set(qn('w:val'), '1')
+                rPr.append(bCs)
+            rFonts = rPr.find(qn('w:rFonts'))
+            if rFonts is None:
+                rFonts = OxmlElement('w:rFonts')
+                rPr.append(rFonts)
+            rFonts.set(qn('w:ascii'), 'David')
+            rFonts.set(qn('w:hAnsi'), 'David')
+            rFonts.set(qn('w:cs'), 'David')
+            return r
+
+        # פונקציה להזנת טקסט בטבלאות ששומרת על הגדרות היישור של הטבלה מהטמפלייט
+        def set_cell_text_safely(cell, text, bold=False, size_pt=11.0):
+            lines = [line.strip() for line in str(text).split("\n") if line.strip()]
+            if not lines:
+                lines = [""]
+            while len(cell.paragraphs) < len(lines):
+                cell.add_paragraph()
+            for i, p in enumerate(cell.paragraphs):
+                p.text = "" 
+                if i < len(lines):
+                    add_hebrew_run(p, lines[i], bold=bold, size_pt=size_pt)
+            for p in list(cell.paragraphs)[len(lines):]:
+                p._p.getparent().remove(p._p)
+
+        template_candidates = ["template.docx", "מבנה הקובץ.docx", "מבנה הקובץ_2.docx", "template_tala.docx"]
         existing_template = next((p for p in template_candidates if os.path.exists(p)), None)
 
         if existing_template:
             doc = Document(existing_template)
 
-            for section in doc.sections:
-                sectPr = section._sectPr
-                for el in sectPr.findall(qn('w:bidi')):
-                    sectPr.remove(el)
-                sectPr.append(parse_xml(f'<w:bidi {nsdecls("w")}/>'))
-
-            # 1. עדכון שם הילד
-            child_label_name = active_name if active_name not in ["הילדה", "הילד", ""] else "________________"
+            # 1. שורת פרטי הילד/ה
+            child_label_name = active_name if active_name not in ["הילדה", "הילד", ""] else "__________"
             for p in doc.paragraphs:
                 if "שם הילד" in p.text:
-                    p.text = f"שם הילד/ה:  {child_label_name}       ת. לידה: _______________       ת.ז: ________________"
-                    apply_pPr_rtl(p, align="right", space_after_pt=12)
-                    for r in p.runs:
-                        apply_rPr_david_rtl(r, bold=True, size_pt=12.0)
+                    p.text = ""
+                    add_hebrew_run(p, f"שם הילד/ה:  {child_label_name}       ת. לידה: _______________       ת.ז: ________________", bold=True, size_pt=12.0)
                     break
 
-            # 2. שיבוץ מטרות ותחומי תפקוד
+            # 2. החלפת טקסט המטרות ותחומי התפקוד בפסקאות הקיימות
             for idx, g in enumerate(st.session_state['goals_list']):
                 target_goal_num = f"מטרה {idx+1}:"
                 for p_i, p in enumerate(doc.paragraphs):
                     if target_goal_num in p.text and "תחומי" not in p.text:
-                        p.text = f"מטרה {idx+1}: {g.get('goal_title', '')}"
-                        apply_pPr_rtl(p, align="right", space_after_pt=3)
-                        for r in p.runs:
-                            apply_rPr_david_rtl(r, bold=True, size_pt=13.0)
+                        p.text = ""
+                        add_hebrew_run(p, f"מטרה {idx+1}: {g.get('goal_title', '')}", bold=True, size_pt=13.0)
 
                         for next_p in doc.paragraphs[p_i+1:p_i+4]:
                             if "תחומי התפקוד" in next_p.text or "תחומי תפקוד" in next_p.text:
@@ -1249,15 +1160,12 @@ if st.session_state['goals_list']:
                                 if not dom_val:
                                     dom_val = "קוגניטיבי / לימודי / התנהגותי רגשי / חברתי / חושי / מוטורי / תקשורתי-שפתי / כישורי חיים"
                                 next_p.text = ""
-                                r_pref = next_p.add_run("תחומי התפקוד אליהם מתייחסת : ")
-                                apply_rPr_david_rtl(r_pref, bold=True, size_pt=11.5)
-                                r_val = next_p.add_run(dom_val)
-                                apply_rPr_david_rtl(r_val, bold=False, size_pt=11.5)
-                                apply_pPr_rtl(next_p, align="right", space_after_pt=6)
+                                add_hebrew_run(next_p, "תחומי התפקוד אליהם מתייחסת : ", bold=True, size_pt=11.5)
+                                add_hebrew_run(next_p, dom_val, bold=True, size_pt=11.5)
                                 break
                         break
 
-            # 3. עדכון טבלת התפקוד (3 עמודות) - עמודה ימנית (תחום) בבולד
+            # 3. מילוי טבלת התפקוד מתוך מה שהועלה
             func_tables = [t for t in doc.tables if len(t.columns) == 3]
             raw_rows = st.session_state.get('raw_uploaded_table', [])
             valid_uploaded_rows = [r for r in raw_rows if len(r) >= 3 and not all(c.strip() == "" for c in r)]
@@ -1270,14 +1178,13 @@ if st.session_state['goals_list']:
                         t_func.add_row()
                     row = t_func.rows[t_idx]
                     for c_i in range(min(3, len(r_data))):
-                        set_cell_clean_text(row.cells[c_i], r_data[c_i].strip(), bold=(c_i == 0), size_pt=11.0, align="right")
+                        set_cell_text_safely(row.cells[c_i], r_data[c_i].strip(), bold=(c_i == 0), size_pt=11.0)
 
-            # 4. שיבוץ יעדים, פרק זמן ודרכי הוראה בטבלאות המטרות (5 עמודות)
+            # 4. מילוי טבלאות המטרות (יעדים, זמנים, דרכי הוראה)
             goal_tables = [t for t in doc.tables if len(t.columns) == 5]
             for idx, g in enumerate(st.session_state['goals_list']):
                 if idx < len(goal_tables):
                     t_goal = goal_tables[idx]
-
                     header_cells = [c.text.strip() for c in t_goal.rows[0].cells]
                     obj_col, tf_col, teach_col = 0, 1, 2
                     for ci, h_txt in enumerate(header_cells):
@@ -1297,72 +1204,31 @@ if st.session_state['goals_list']:
 
                     for o_i, obj_item in enumerate(objs):
                         row = t_goal.rows[o_i + 1]
-
                         raw_text = obj_item.get('text', '')
                         clean_obj = re.sub(r'^[\s•\-\*\d\.\)]+', '', raw_text).strip()
-                        set_cell_clean_text(row.cells[obj_col], clean_obj, bold=False, size_pt=11.0, align="right")
-
+                        set_cell_text_safely(row.cells[obj_col], clean_obj, bold=False, size_pt=11.0)
                         tf_val = obj_item.get('timeframe', 'עד סוף השנה').strip()
-                        set_cell_clean_text(row.cells[tf_col], tf_val, bold=False, size_pt=11.0, align="center")
+                        set_cell_text_safely(row.cells[tf_col], tf_val, bold=False, size_pt=11.0)
 
                     if n_objs > 1:
                         c_top = t_goal.cell(1, teach_col)
                         c_bot = t_goal.cell(n_objs, teach_col)
                         c_merged = c_top.merge(c_bot)
-                        set_cell_clean_text(c_merged, teach_txt, bold=False, size_pt=10.5, align="right")
+                        set_cell_text_safely(c_merged, teach_txt, bold=False, size_pt=10.5)
 
                         other_cols = [c for c in range(5) if c not in (obj_col, tf_col, teach_col)]
                         for oc in other_cols:
                             t_goal.cell(1, oc).merge(t_goal.cell(n_objs, oc))
                     else:
-                        set_cell_clean_text(t_goal.cell(1, teach_col), teach_txt, bold=False, size_pt=10.5, align="right")
-
-            # 5. החלת פונט David, Bidi ויישור ימני מלא על כלל הפסקאות והטבלאות במסמך
-            for p in doc.paragraphs:
-                is_centered = (p.alignment == WD_ALIGN_PARAGRAPH.CENTER) or ("תוכנית לימודים" in p.text)
-                target_align = "center" if is_centered else "right"
-                for r in p.runs:
-                    apply_rPr_david_rtl(r)
-                apply_pPr_rtl(p, align=target_align)
-
-            for t in doc.tables:
-                t.alignment = WD_TABLE_ALIGNMENT.RIGHT
-                tblPr = t._tbl.tblPr
-                for el in tblPr.findall(qn('w:bidiVisual')):
-                    tblPr.remove(el)
-                tblPr.append(parse_xml(f'<w:bidiVisual {nsdecls("w")}/>'))
-
-                for r_idx, row in enumerate(t.rows):
-                    for c_idx, cell in enumerate(row.cells):
-                        is_func_domain_cell = (len(row.cells) == 3 and c_idx == 0 and r_idx > 0)
-                        for p in cell.paragraphs:
-                            is_p_centered = (p.alignment == WD_ALIGN_PARAGRAPH.CENTER or r_idx == 0)
-                            for r in p.runs:
-                                if is_func_domain_cell:
-                                    apply_rPr_david_rtl(r, bold=True)
-                                else:
-                                    apply_rPr_david_rtl(r)
-                            apply_pPr_rtl(p, align="center" if is_p_centered else "right")
+                        set_cell_text_safely(t_goal.cell(1, teach_col), teach_txt, bold=False, size_pt=10.5)
 
             bio = io.BytesIO()
             doc.save(bio)
             return bio.getvalue()
 
-        # הפקה מאפס במידה ואין קובץ טמפלייט
         doc = Document()
-        for section in doc.sections:
-            section.top_margin = Inches(0.6)
-            section.bottom_margin = Inches(0.6)
-            section.left_margin = Inches(0.65)
-            section.right_margin = Inches(0.65)
-            sectPr = section._sectPr
-            sectPr.append(parse_xml(f'<w:bidi {nsdecls("w")}/>'))
-
-        p_t = doc.add_paragraph()
-        r = p_t.add_run("תוכנית לימודים אישית לתלמיד בחינוך המיוחד – תל\"א")
-        apply_rPr_david_rtl(r, bold=True, size_pt=16.0)
-        apply_pPr_rtl(p_t, align="center", space_after_pt=12)
-
+        p_t = doc.add_paragraph("תוכנית לימודים אישית לתלמיד בחינוך המיוחד – תל\"א")
+        p_t.alignment = WD_ALIGN_PARAGRAPH.CENTER
         bio = io.BytesIO()
         doc.save(bio)
         return bio.getvalue()
